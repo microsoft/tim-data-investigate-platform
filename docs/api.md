@@ -5,7 +5,7 @@
 ### Execute a query
 
 ```text
-POST /query-execute
+POST /queries/execute
 ```
 
 **Parameters:**
@@ -51,7 +51,7 @@ POST /query-execute
 ### Retrieve query result
 
 ```text
-GET /query-execute/:query_id
+GET /queries/:query_id/result
 ```
 
 **Parameters:**
@@ -77,7 +77,7 @@ GET /query-execute/:query_id
 ### List all labels for query result
 
 ```text
-POST /queries/:query_id/labels
+GET /queries/:query_id/labels
 ```
 
 **Parameters:**
@@ -98,7 +98,7 @@ POST /queries/:query_id/labels
 
 ### Auto-tag query result
 
-Apply tags to a query result using the given auto-tag group.
+Retrieve tags for a query result using the given auto-tag group.
 
 ```text
 POST /queries/:query_id/autotag/:group_id
