@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
 WORKDIR /app
 
-# -------------- Step 1. Copy only required files for nuget restore for better caching
+# ------------- Step 1. Copy only required files for nuget restore for better caching
 # 1.1 Copy solution & nuget config file (if exists)
 COPY ./* ./
 # 1.2 Copy csproj and create folders for projects
