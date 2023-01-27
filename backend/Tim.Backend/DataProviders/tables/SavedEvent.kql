@@ -1,0 +1,14 @@
+﻿.create-merge table SavedEvent
+(
+    EventId:string,
+    EventTime:datetime,
+    DateTimeUtc:datetime,
+    CreatedBy:string,
+    EventAsJson:dynamic
+)
+
+.alter table SavedEvent policy ingestiontime true
+
+.alter-merge table SavedEvent policy retention softdelete = 1080d recoverability = disabled
+
+.alter table SavedEvent policy ingestionbatching @'{"MaximumBatchingTimeSpan":"00:00:10", "MaximumNumberOfItems": 1, "MaximumRawDataSizeMB": 300}'

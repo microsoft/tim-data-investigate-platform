@@ -1,0 +1,33 @@
+{
+    "bootstrap-sha": "bdce29e656c5f4e0be9132ce832ea46b7d93a194",
+    "packages": {
+      ".": {
+        "changelog-path": "CHANGELOG.md",
+        "release-type": "simple",
+        "package-name": "core"
+      },
+      "frontend": {
+        "release-type": "simple",
+        "package-name": "frontend",
+        "extra-files": [
+            {
+                "type": "yaml",
+                "path": "helm/Chart.yaml",
+                "jsonpath": "$.version"
+            }
+        ]
+      },
+      "backend": {
+        "release-type": "simple",
+        "package-name": "backend",
+        "extra-files": [
+            {
+                "type": "yaml",
+                "path": "helm/Chart.yaml",
+                "jsonpath": "$.version"
+            }
+        ]
+      }
+    },
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+}

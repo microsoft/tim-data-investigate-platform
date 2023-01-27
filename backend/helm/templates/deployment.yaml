@@ -1,0 +1,85 @@
+{{- if .Values.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- include "backend.image.pullSecrets" . | indent 6 }}
+      serviceAccountName: {{ include "backend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ coalesce .Values.image.registry .Values.global.image.registry }}/{{ coalesce .Values.image.repository .Values.global.image.repository }}/backend:{{ include "backend.versionTag" . }}"
+          {{- include "backend.image.pullPolicy" . | indent 10 }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/healthChecks/liveness
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/healthChecks/readiness
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: KUSTO_APP_KEY
+              value: {{ .Values.params.kusto_app_key | quote }}
+            - name: KUSTO_URL
+              value: {{ .Values.params.kusto_url | quote }}
+            - name: KUSTO_INGEST_URL
+              value: {{ .Values.params.kusto_ingest_url | quote }}
+            - name: KUSTO_CLIENT_APP_ID
+              value: {{ .Values.params.kusto_client_id | quote }}
+            - name: SIGNING_KEY
+              value: {{ .Values.params.signing_key | quote }}
+            - name: AUTH_USERNAME
+              value: {{ .Values.params.auth_username | quote }}
+            - name: AUTH_PASSWORD
+              value: {{ .Values.params.auth_password | quote }}
+            - name: DB_USER_NAME
+              {{- include "backend.db.username" . | nindent 14 }}
+            - name: DB_USER_PASSWORD
+              {{- include "backend.db.password" . | nindent 14 }}
+            - name: REDIS_HOSTS
+              value: {{ join "," .Values.params.redis_hosts | quote }}
+            - name: REDIS_PASSWORD
+              value: {{ .Values.params.redis_password | quote }}
+            - name: DB_CONNECT_STRING
+              value: {{ .Values.params.db_connect_string | quote }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

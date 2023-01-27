@@ -1,0 +1,9 @@
+dependencies:
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 17.2.0
+- name: couchbase-operator
+  repository: https://couchbase-partners.github.io/helm-charts/
+  version: 2.32.0
+digest: sha256:e00443de236048192019f394896f17a2f619ef3953cd2aaa83ed0bc97e8079a8
+generated: "2022-10-18T13:03:51.8516125-07:00"

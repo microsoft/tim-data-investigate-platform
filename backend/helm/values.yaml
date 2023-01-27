@@ -1,0 +1,113 @@
+# Default values for backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+enabled: true
+
+versionTag: ""
+
+params:
+  redis_hosts: 
+    - "redis-master:6379"
+  redis_password: ""
+  db_user_password: ""
+  kusto_app_key: ""
+  db_user_name: ""
+  db_connect_string: ""
+  kusto_url: ""
+  kusto_ingest_url: ""
+  kusto_client_id: ""
+  signkey_key: ""
+  auth_username: ""
+  auth_password: ""
+
+replicaCount: 1
+
+global:
+  image: {}
+  redis:
+    enabled: true
+  couchbase-operator:
+    enabled: true
+
+image:
+  registry: ghcr.io
+  repository: microsoft/tim-data-investigate-platform
+  pullPolicy: IfNotPresent
+  # pullSecrets:
+  #   - name: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+redis:
+  fullnameOverride: redis
+  
+  architecture: standalone
+
+  resources: {}
+
+  metrics:
+    enabled: false
+
+  usePassword: false  
+
+couchbase-operator:
+  cluster:
+    name: couchbase
+    servers:
+      default:
+        size: 1
+  
+  resources: {}

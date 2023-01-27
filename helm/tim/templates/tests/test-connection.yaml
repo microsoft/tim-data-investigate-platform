@@ -1,0 +1,25 @@
+{{- if or .Values.frontend.enabled .Values.backend.enabled -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "tim.fullname" . }}-test-connection"
+  labels:
+    {{- include "tim.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    {{- if .Values.frontend.enabled }}
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "frontend.fullname" .Subcharts.frontend }}:{{ .Values.frontend.service.port }}']
+    {{- end }}
+    {{- if .Values.backend.enabled }}
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "backend.fullname" .Subcharts.backend }}:{{ .Values.backend.service.port }}']
+    {{- end }}
+  restartPolicy: Never
+{{- end -}}

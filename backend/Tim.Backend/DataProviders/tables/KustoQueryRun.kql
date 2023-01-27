@@ -1,0 +1,16 @@
+﻿.create-merge table KustoQueryRun
+(
+    TriggeredBy:string,
+    TriggeredDateTimeUtc:datetime,
+    QueryRunId:string,
+    QueryId:string,
+    QueryStartDateTimeUtc:datetime,
+    QueryEndDateTimeUtc:datetime,
+    ResultRowCount:int,
+    ExecutionMetrics:string,
+    Errors:dynamic
+)
+
+.alter table KustoQueryRun policy ingestiontime true
+
+.alter table KustoQueryRun policy ingestionbatching @'{"MaximumBatchingTimeSpan":"00:00:10", "MaximumNumberOfItems": 5, "MaximumRawDataSizeMB": 300}'

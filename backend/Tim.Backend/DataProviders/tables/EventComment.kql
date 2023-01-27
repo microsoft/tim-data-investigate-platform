@@ -1,0 +1,15 @@
+﻿.create-merge table EventComment
+(
+    EventId:string,
+    DateTimeUtc:datetime,
+    CreatedBy:string,
+    Comment:string,
+    Determination:string,
+    IsDeleted:bool
+)
+
+.alter table EventComment policy ingestiontime true
+
+.alter-merge table EventComment policy retention softdelete = 1080d recoverability = disabled
+
+.alter table EventComment policy ingestionbatching @'{"MaximumBatchingTimeSpan":"00:00:10", "MaximumNumberOfItems": 1, "MaximumRawDataSizeMB": 300}'

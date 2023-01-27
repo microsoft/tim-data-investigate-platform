@@ -1,0 +1,15 @@
+dependencies:
+- name: frontend
+  repository: file://../../frontend/helm
+  version: 1.0.1
+- name: backend
+  repository: file://../../backend/helm
+  version: 1.0.3
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 17.4.3
+- name: couchbase-operator
+  repository: https://couchbase-partners.github.io/helm-charts/
+  version: 2.32.2
+digest: sha256:3fbdbea46ce8af038fde943aae1788eeffe0639342f282150866085c2b1a9710
+generated: "2023-01-17T13:10:27.336399-08:00"

@@ -1,0 +1,94 @@
+on:
+   push:
+     branches:
+       - main
+
+name: release-please
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-release: ${{ steps.release.outputs.frontend--release_created }}
+      frontend-tag: ${{ steps.release.outputs.frontend--tag_name }}
+      backend-release: ${{ steps.release.outputs.backend--release_created }}
+      backend-tag: ${{ steps.release.outputs.backend--tag_name }}
+      core-release: ${{ steps.release.outputs.releases_created }}
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          command: manifest
+
+  build-frontend:
+    runs-on: ubuntu-latest    
+    needs: release-please
+    permissions:
+      contents: read
+      packages: write
+    if: ${{ needs.release-please.outputs.frontend-release }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log into github docker
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend
+          tags: |
+            type=ref,event=tag
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: release-please
+    permissions:
+      contents: read
+      packages: write
+    if: ${{ needs.release-please.outputs.backend-release }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log into github docker
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
+          tags: |
+            type=ref,event=tag
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

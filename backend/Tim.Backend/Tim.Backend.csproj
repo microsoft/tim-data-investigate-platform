@@ -1,0 +1,74 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>Tim.Backend</AssemblyName>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <UserSecretsId>f7949252-8de8-4bb8-8ca6-a254c6854047</UserSecretsId>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile />
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Dto\**" />
+    <Content Remove="Dto\**" />
+    <EmbeddedResource Remove="Dto\**" />
+    <None Remove="Dto\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="stylecop.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="stylecop.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Autofac" />
+    <PackageReference Include="CouchbaseNetClient" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" />
+    <PackageReference Include="Microsoft.Azure.Kusto.Data" />
+    <PackageReference Include="Microsoft.Azure.Kusto.Ingest" />
+    <PackageReference Include="Microsoft.Azure.ServiceBus" />
+    <PackageReference Include="Microsoft.Extensions.Azure" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Identity.Web" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Polly" />
+    <PackageReference Include="prometheus-net.AspNetCore" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Stylecop.Analyzers" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Tim.Common\Tim.Common.csproj" />
+    <ProjectReference Include="..\Tim.Flow\Tim.Flow.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Update="secrets.example.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Properties\launchSettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,14 @@
+apiVersion: v2
+name: backend
+description: A Helm chart for Kubernetes
+type: application
+version: 1.0.5
+dependencies:
+  - name: redis
+    version: 17.2.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: global.redis.enabled
+  - name: couchbase-operator
+    version: 2.32.0
+    repository: https://couchbase-partners.github.io/helm-charts/
+    condition: global.couchbase-operator.enabled

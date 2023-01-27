@@ -1,0 +1,45 @@
+# Default values for tim.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  image:
+    registry: ghcr.io
+    repository: microsoft/tim-data-investigate-platform
+    pullPolicy: IfNotPresent
+    # pullSecrets:
+    #   - name: ""
+  redis: {}
+  #   enabled: true
+  couchbase-operator: {}
+  #   enabled: true
+
+frontend: {}
+  #enabled: true
+  # versionTag: ""
+
+backend: {}
+  # enabled: true
+  # versionTag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+  host: ""
+  backend:
+    paths:
+      - path: "/api(?:/|$)(.*)"
+        pathType: Prefix
+  frontend:
+    paths:
+      - path: /(.*)
+        pathType: Prefix
+  tls:
+    - secretName: tim-backend-ssc
