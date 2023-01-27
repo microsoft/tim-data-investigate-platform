@@ -1,4 +1,4 @@
-# investigate
+# Investigate
 
 ## Project setup
 ```
