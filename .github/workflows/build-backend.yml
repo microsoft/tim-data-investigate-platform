@@ -84,15 +84,15 @@ jobs:
 
       - name: Deploy helm chart
         env:
-          REDIS_HOSTS: '${{ secrets.REDIS_HOSTS }}'
+          REDIS_HOSTS: '${{ vars.REDIS_HOSTS }}'
           REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
-          DB_CONNECT_STRING: '${{ secrets.DB_CONNECT_STRING }}'
+          DB_CONNECT_STRING: '${{ vars.DB_CONNECT_STRING }}'
           KUSTO_APP_KEY: '${{ secrets.KUSTO_APP_KEY }}'
-          KUSTO_URL: '${{ secrets.KUSTO_URL }}'
-          KUSTO_INGEST_URL: '${{ secrets.KUSTO_INGEST_URL }}'
+          KUSTO_URL: '${{ vars.KUSTO_URL }}'
+          KUSTO_INGEST_URL: '${{ vars.KUSTO_INGEST_URL }}'
           KUSTO_CLIENT_APP_ID: '${{ secrets.KUSTO_CLIENT_APP_ID }}'
           SIGNING_KEY: '${{ secrets.SIGNING_KEY }}'
-          AUTH_USERNAME: '${{ secrets.AUTH_USERNAME }}'
+          AUTH_USERNAME: '${{ vars.AUTH_USERNAME }}'
           AUTH_PASSWORD: '${{ secrets.AUTH_PASSWORD }}'
         run: |
           helm upgrade tim . --install \
