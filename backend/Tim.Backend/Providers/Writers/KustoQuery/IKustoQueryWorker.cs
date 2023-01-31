@@ -18,7 +18,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
     public interface IKustoQueryWorker
     {
 #pragma warning disable SA1600 // Elements should be documented
-        Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseClient reader, KustoQueryClient kustoclient, DatabaseClasses configs, CancellationToken cancellationToken);
+        Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseClient reader, KustoQueryClient kustoclient, DatabaseConfiguration configs, CancellationToken cancellationToken);
 #pragma warning restore SA1600 // Elements should be documented
     }
 }

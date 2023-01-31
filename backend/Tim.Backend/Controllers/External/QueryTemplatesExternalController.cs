@@ -29,7 +29,7 @@ namespace Tim.Backend.Controllers.External
     public class QueryTemplatesExternalController : ControllerBase
     {
         private readonly IDatabaseClient m_dbClient;
-        private readonly DatabaseClasses m_configs;
+        private readonly DatabaseConfiguration m_configs;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueryTemplatesExternalController"/> class.
@@ -38,7 +38,7 @@ namespace Tim.Backend.Controllers.External
         /// <param name="dbConfigs">Configuration for database collection names.</param>
         public QueryTemplatesExternalController(
             IDatabaseClient idbClient,
-            IOptions<DatabaseClasses> dbConfigs)
+            IOptions<DatabaseConfiguration> dbConfigs)
         {
             m_dbClient = idbClient;
             m_configs = dbConfigs.Value;
@@ -97,7 +97,7 @@ namespace Tim.Backend.Controllers.External
             template.Updated = DateTime.UtcNow;
 
 #pragma warning disable IDE0058 // Expression value is never used
-            await m_dbClient.AddorUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
+            await m_dbClient.AddOrUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
 #pragma warning restore IDE0058 // Expression value is never used
 
             return Ok();
@@ -123,7 +123,7 @@ namespace Tim.Backend.Controllers.External
             template.Updated = DateTime.UtcNow;
 
 #pragma warning disable IDE0058 // Expression value is never used
-            await m_dbClient.AddorUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
+            await m_dbClient.AddOrUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
 #pragma warning restore IDE0058 // Expression value is never used
 
             return Ok();
@@ -163,7 +163,7 @@ namespace Tim.Backend.Controllers.External
             template.Updated = DateTime.UtcNow;
 
 #pragma warning disable IDE0058 // Expression value is never used
-            await m_dbClient.AddorUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
+            await m_dbClient.AddOrUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
 #pragma warning restore IDE0058 // Expression value is never used
 
             return NoContent();
@@ -185,7 +185,7 @@ namespace Tim.Backend.Controllers.External
             template.IsDeleted = true;
 
 #pragma warning disable IDE0058 // Expression value is never used
-            await m_dbClient.AddorUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
+            await m_dbClient.AddOrUpdateItem<QueryTemplate>(template.Uuid.ToString(), JsonConvert.SerializeObject(template), m_configs.QueryTemplatesContainerName);
 #pragma warning restore IDE0058 // Expression value is never used
 
             return NoContent();

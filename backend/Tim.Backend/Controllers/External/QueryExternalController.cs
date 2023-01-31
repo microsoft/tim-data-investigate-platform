@@ -38,7 +38,7 @@ namespace Tim.Backend.Controllers.External
         private readonly KustoQueryClient m_kustoQueryClient;
         private readonly IKustoUserReader m_userReader;
         private readonly IKustoQueryWorker m_kustoQueryExecutor;
-        private readonly IOptions<DatabaseClasses> m_configs;
+        private readonly IOptions<DatabaseConfiguration> m_dbConfigs;
         private readonly IDatabaseClient m_dbClient;
         private readonly IConnectionMultiplexer m_redisConnection;
         private readonly ILogger m_logger;
@@ -63,7 +63,7 @@ namespace Tim.Backend.Controllers.External
             KustoQueryClient kustoQueryClient,
             ITokenAcquisition tokenAcquisition,
             IKustoQueryWorker kustoQueryworker,
-            IOptions<DatabaseClasses> configsDb,
+            IOptions<DatabaseConfiguration> configsDb,
             IDatabaseClient idbClient,
             IConnectionMultiplexer connectionMultiplexer)
         {
@@ -71,7 +71,7 @@ namespace Tim.Backend.Controllers.External
             m_ingestClient = kustoClient;
             m_kustoQueryExecutor = kustoQueryworker;
             m_dbClient = idbClient;
-            m_configs = configsDb;
+            m_dbConfigs = configsDb;
             m_redisConnection = connectionMultiplexer;
             m_kustoQueryClient = kustoQueryClient;
             m_logger = Log.Logger;
@@ -105,12 +105,12 @@ namespace Tim.Backend.Controllers.External
                         title: "Kusto Query must be specified. "));
                 }
 
-                var queryRunRecord = await QueryRunHelper.ExecuteQueryHelper(queryRequest, m_dbClient, m_ingestClient, m_configs.Value.QueryRunsContainerName, cancellationToken);
+                var queryRunRecord = await QueryRunHelper.ExecuteQueryHelper(queryRequest, m_dbClient, m_ingestClient, m_dbConfigs.Value.QueryRunsContainerName, cancellationToken);
 
                 // TODO 2022-10-07 - switch to app id/key for kusto queries - will revert back to user executes queries once we have a chance to refactor auth
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 #pragma warning disable IDE0058 // Expression value is never used
-                Task.Run(() => m_kustoQueryExecutor.RunQuery(string.Empty, queryRunRecord, m_userReader, m_dbClient, m_kustoQueryClient, m_configs.Value, CancellationToken.None));
+                Task.Run(() => m_kustoQueryExecutor.RunQuery(string.Empty, queryRunRecord, m_userReader, m_dbClient, m_kustoQueryClient, m_dbConfigs.Value, CancellationToken.None));
 #pragma warning restore IDE0058 // Expression value is never used
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 return new KustoQueryTriggerResponse(queryRunRecord.QueryRunId, "Query has been queued. ");
@@ -136,7 +136,7 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<KustoQueryRunActionResponse>> CheckQueryStatus(string queryRunId, CancellationToken cancellationToken)
         {
-            var queryRun = await m_dbClient.GetItem<KustoQueryRun>(queryRunId, m_configs.Value.QueryRunsContainerName);
+            var queryRun = await m_dbClient.GetItem<KustoQueryRun>(queryRunId, m_dbConfigs.Value.QueryRunsContainerName);
 
             if (queryRun == null)
             {
@@ -184,7 +184,7 @@ namespace Tim.Backend.Controllers.External
                 {
                     queryRun.Status = QueryRunStates.TimedOut;
 #pragma warning disable IDE0058 // Expression value is never used
-                    await m_dbClient.AddorUpdateItem<KustoQueryRun>(queryRun.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRun), m_configs.Value.QueryRunsContainerName);
+                    await m_dbClient.AddOrUpdateItem<KustoQueryRun>(queryRun.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRun), m_dbConfigs.Value.QueryRunsContainerName);
 #pragma warning restore IDE0058 // Expression value is never used
                 }
 

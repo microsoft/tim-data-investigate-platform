@@ -9,6 +9,7 @@ namespace Tim.Backend.Startup
     using System.IO;
     using System.Reflection;
     using System.Text;
+    using System.Threading.Tasks;
     using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,10 +35,6 @@ namespace Tim.Backend.Startup
     /// </summary>
     public static class ServiceExtensions
     {
-        private const string c_azureADSectionName = "AzureAd";
-        private static readonly string s_scheme = Environment.GetEnvironmentVariable("AUTH_SCHEME") ?? "AzureAD";
-        private static readonly string s_instance = Environment.GetEnvironmentVariable("AUTH_INSTANCE") ?? "https://login.microsoftonline.com";
-
         /// <summary>
         /// Add proper service configurations.
         /// </summary>
@@ -67,9 +64,10 @@ namespace Tim.Backend.Startup
 
             services.AddOptions();
             services.Configure<KustoConfiguration>(configuration.GetSection(nameof(KustoConfiguration)));
-            services.Configure<DatabaseClasses>(configuration.GetSection(nameof(DatabaseClasses)));
+            services.Configure<DatabaseConfiguration>(configuration.GetSection(nameof(DatabaseConfiguration)));
             services.Configure<AuthConfiguration>(configuration.GetSection(nameof(AuthConfiguration)));
-            services.Configure<AzureResourcesSectionSecrets>(configuration.GetSection(nameof(AzureResourcesSectionSecrets)));
+            services.Configure<RedisConfiguration>(configuration.GetSection(nameof(RedisConfiguration)));
+            services.Configure<SwaggerConfiguration>(configuration.GetSection(nameof(SwaggerConfiguration)));
         }
 
         /// <summary>
@@ -137,14 +135,12 @@ namespace Tim.Backend.Startup
                 throw new ArgumentNullException(nameof(environment));
             }
 
-            var secrets = configuration.GetSection(nameof(AzureResourcesSectionSecrets)).Get<AzureResourcesSectionSecrets>() ?? new AzureResourcesSectionSecrets();
-
             // create  kusto and database configuration since it is not being loaded from services set up, but grabbing either env or default values
-            var dbConfigs = new DatabaseClasses();
+            var redisConfigs = configuration.GetSection(nameof(RedisConfiguration)).Get<RedisConfiguration>() ?? new RedisConfiguration();
             var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
             var authConfigs = configuration.GetSection(nameof(AuthConfiguration)).Get<AuthConfiguration>() ?? new AuthConfiguration();
 
-            secrets.Validate();
+            redisConfigs.Validate();
             kustoConfigs.Validate();
             authConfigs.Validate();
 
@@ -156,7 +152,7 @@ namespace Tim.Backend.Startup
                     InitialCatalog = kustoConfigs.KustoDatabase,
                     FederatedSecurity = true,
                     ApplicationClientId = kustoConfigs.KustoAppId,
-                    ApplicationKey = secrets.KustoAppKey,
+                    ApplicationKey = kustoConfigs.KustoAppKey,
                     ApplicationNameForTracing = "TIM-Ingest-To-Kusto",
                 };
 
@@ -171,7 +167,7 @@ namespace Tim.Backend.Startup
                     InitialCatalog = kustoConfigs.KustoDatabase,
                     FederatedSecurity = true,
                     ApplicationClientId = kustoConfigs.KustoAppId,
-                    ApplicationKey = secrets.KustoAppKey,
+                    ApplicationKey = kustoConfigs.KustoAppKey,
                     ApplicationNameForTracing = "TIM-Query-To-Kusto",
                 };
 
@@ -199,23 +195,41 @@ namespace Tim.Backend.Startup
             services.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(p =>
             {
                 var endpoints = new EndPointCollection();
-                secrets.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
+                redisConfigs.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
                 return ConnectionMultiplexer.Connect(
                     new ConfigurationOptions()
                     {
                         EndPoints = endpoints,
-                        Password = secrets.RedisPassword,
+                        Password = redisConfigs.RedisPassword,
                     });
             });
 
+            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            dbConfigs.Validate();
+
+            services.AddScoped<IDatabaseClient, CouchbaseDbClient>(p => new CouchbaseDbClient(dbConfigs));
+
             services.AddScoped<IKustoUserReader, KustoUserReader>();
 
-            services.AddSingleton<IDatabaseClient, DatabaseClient>(p =>
-            {
-                return new DatabaseClient(DatabaseClient.DatabaseClientType.CouchBaseDb, secrets, dbConfigs);
-            });
-
             services.AddSingleton<ISharedCache, InMemoryCache>();
+        }
+
+        /// <summary>
+        /// Initialization code for the database client.
+        /// </summary>
+        /// <param name="host">The host object to modify.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task InitializeDatabaseAsync(this IWebHost host)
+        {
+            if (host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
+            var scope = host.Services.CreateScope();
+            var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
+            await dbService.ConnectDatabase();
         }
 
         /// <summary>
@@ -225,8 +239,8 @@ namespace Tim.Backend.Startup
         /// <param name="configuration">Defined configuration.</param>
         /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
         public static void AddSwagger(
-          this IServiceCollection services,
-          IConfiguration configuration)
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
             if (services is null)
             {
@@ -256,7 +270,6 @@ namespace Tim.Backend.Startup
 
                 // Schema IDs are by default Type's Name but unfortunately we have collisions.
                 c.CustomSchemaIds(t => t.FullName);
-                var secrets = configuration.GetSection(nameof(AzureResourcesSectionSecrets)).Get<AzureResourcesSectionSecrets>();
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                 {
@@ -305,7 +318,8 @@ namespace Tim.Backend.Startup
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            var secrets = configuration.GetSection(nameof(AzureResourcesSectionSecrets)).Get<AzureResourcesSectionSecrets>();
+            var serverConfigs = configuration.GetSection(nameof(SwaggerConfiguration)).Get<SwaggerConfiguration>() ?? new SwaggerConfiguration();
+            serverConfigs.Validate();
 
             app.UseSwagger(c =>
             {
@@ -315,7 +329,7 @@ namespace Tim.Backend.Startup
                     //  NOTE: in K8s, our Nginx ingress controller adds these headers
                     var protocol = httpReq.Headers.TryGetHeaderValueWithDefault("X-Forwarded-Proto", httpReq.Scheme);
                     var hostName = httpReq.Headers.TryGetHeaderValueWithDefault("X-Forwarded-Host", httpReq.Host.ToString());
-                    var serverUrl = $"{protocol}://{hostName}{configuration.GetValue<string>("AzureResourcesSection:ControllerPath")}/";
+                    var serverUrl = $"{protocol}://{hostName}{serverConfigs.ApiBasePath}";
 
                     // Servers property on swagger is required for certain scanners to work correctly.
                     swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = serverUrl } };
@@ -331,8 +345,8 @@ namespace Tim.Backend.Startup
             string defaultValue)
         {
             return headers.TryGetValue(headerName, out var headerValue) && !string.IsNullOrEmpty(headerValue)
-                                ? headerValue.ToString()
-                                : defaultValue;
+                ? headerValue.ToString()
+                : defaultValue;
         }
     }
 }
