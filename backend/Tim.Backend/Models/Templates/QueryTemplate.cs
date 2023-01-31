@@ -138,7 +138,7 @@ namespace Tim.Backend.Models.Templates
         {
             if (QueryType == QueryType.Query && (Fields == null || !Fields.Any()))
             {
-                yield return new ValidationResult("'Fields' field is required if query type is 'query'");
+                yield return new ValidationResult("'fields' field is required if query type is 'query'");
             }
         }
     }

@@ -34,7 +34,7 @@ namespace Tim.Backend.Providers.Helpers
             var queryRunRecord = new KustoQueryRun(queryRequest.RequestedBy, Guid.Empty, queryRequest.StartTime, queryRequest.EndTime);
 
             // record the run even if there were no results
-            var queryRunRecordSaved = await dbClient.AddorUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), containerName);
+            var queryRunRecordSaved = await dbClient.AddOrUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), containerName);
             await ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunRecordSaved }, containerName, cancellationToken);
 
             // pre make a query execution thing

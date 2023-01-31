@@ -34,6 +34,12 @@ namespace Tim.Backend.Startup.Config
         public string IngestKustoClusterUri { get; set; } = Environment.GetEnvironmentVariable("KUSTO_INGEST_URL");
 
         /// <summary>
+        /// Gets or sets the kusto app secret key.
+        /// </summary>
+        [Required]
+        public string KustoAppKey { get; set; } = Environment.GetEnvironmentVariable("KUSTO_APP_KEY");
+
+        /// <summary>
         /// Gets or sets the kusto App Id used to query kusto for not OBO query executions.
         /// </summary>
         [Required]

@@ -63,7 +63,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
         /// <param name="configs">Configurations.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Always returns true if instace runs to completion.</returns>
-        public async Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseClient dbClient, KustoQueryClient kustoClient, DatabaseClasses configs, CancellationToken cancellationToken)
+        public async Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseClient dbClient, KustoQueryClient kustoClient, DatabaseConfiguration configs, CancellationToken cancellationToken)
         {
             var queryRunRecord = await dbClient.GetItem<KustoQueryRun>(data.QueryRunId.ToString(), configs.QueryRunsContainerName);
 
@@ -107,7 +107,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
                 queryRunRecord.Errors = kustoException;
                 queryRunRecord.Status = QueryRunStates.Error;
                 queryRunRecord.MainError = "Exception during query execution: " + kustoException.Message;
-                var queryRunError = await dbClient.AddorUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
+                var queryRunError = await dbClient.AddOrUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
                 await m_ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunError }, configs.QueryRunsContainerName, cancellationToken);
                 return true;
             }
@@ -117,7 +117,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
                 queryRunRecord.Errors = e;
                 queryRunRecord.Status = QueryRunStates.Error;
                 queryRunRecord.MainError = "Exception during query execution: " + e.Message;
-                var queryRunError = await dbClient.AddorUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
+                var queryRunError = await dbClient.AddOrUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
                 await m_ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunError }, configs.QueryRunsContainerName, cancellationToken);
                 return true;
             }
@@ -140,13 +140,13 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
                 queryRunRecord.Errors = e;
                 queryRunRecord.Status = QueryRunStates.Error;
                 queryRunRecord.MainError = "Exception while saving results: " + e.Message;
-                var queryRunError = await dbClient.AddorUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
+                var queryRunError = await dbClient.AddOrUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
                 await m_ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunError }, configs.QueryRunsContainerName, cancellationToken);
             }
 
             // once results are written update query run cosmos db table and write record of the query run to kusto
             queryRunRecord.Status = QueryRunStates.Completed;
-            var queryRun = await dbClient.AddorUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
+            var queryRun = await dbClient.AddOrUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), configs.QueryRunsContainerName);
             await m_ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRun }, configs.QueryRunsContainerName, cancellationToken);
 
             return true;
