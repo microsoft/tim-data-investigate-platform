@@ -9,8 +9,8 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
     using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Models;
     using Tim.Backend.Providers.Database;
+    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Providers.Readers;
-    using Tim.Backend.Startup.Config;
 
     /// <summary>
     /// Class that helps organize everything to get query to be ready to be executed on behalf of user.Interface exists to easily abstract this for local testing without using kusto.
@@ -18,7 +18,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
     public interface IKustoQueryWorker
     {
 #pragma warning disable SA1600 // Elements should be documented
-        Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseClient reader, KustoQueryClient kustoclient, DatabaseConfiguration configs, CancellationToken cancellationToken);
+        Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseRepository<QueryRunJsonEntity> dbRepository, KustoQueryClient kustoclient, string kustoTableName, CancellationToken cancellationToken);
 #pragma warning restore SA1600 // Elements should be documented
     }
 }

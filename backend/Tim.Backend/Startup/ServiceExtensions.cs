@@ -24,6 +24,7 @@ namespace Tim.Backend.Startup
     using StackExchange.Redis;
     using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Providers.Database;
+    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Providers.Readers;
     using Tim.Backend.Providers.Writers.KustoQuery;
     using Tim.Backend.Startup;
@@ -204,11 +205,6 @@ namespace Tim.Backend.Startup
                     });
             });
 
-            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
-            dbConfigs.Validate();
-
-            services.AddScoped<IDatabaseClient, CouchbaseDbClient>(p => new CouchbaseDbClient(dbConfigs));
-
             services.AddScoped<IKustoUserReader, KustoUserReader>();
 
             services.AddSingleton<ISharedCache, InMemoryCache>();
@@ -229,7 +225,27 @@ namespace Tim.Backend.Startup
 
             var scope = host.Services.CreateScope();
             var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
-            await dbService.ConnectDatabase();
+            await dbService.Connect();
+            await dbService.Initialize();
+        }
+
+        /// <summary>
+        /// Add couchbase connections.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddCouchBase(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            dbConfigs.Validate();
+
+            var cbClient = new CouchbaseDbClient(dbConfigs);
+            services.AddScoped<IDatabaseClient, CouchbaseDbClient>(p => cbClient);
+            services.AddScoped<IDatabaseRepository<QueryRunJsonEntity>, CouchbaseRepository<QueryRunJsonEntity>>(p => new CouchbaseRepository<QueryRunJsonEntity>(cbClient));
+            services.AddScoped<IDatabaseRepository<QueryTemplateJsonEntity>, CouchbaseRepository<QueryTemplateJsonEntity>>(p => new CouchbaseRepository<QueryTemplateJsonEntity>(cbClient));
         }
 
         /// <summary>

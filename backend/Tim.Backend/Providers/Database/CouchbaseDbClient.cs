@@ -5,23 +5,17 @@
 namespace Tim.Backend.Providers.Database
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Threading.Tasks;
 
     using Couchbase;
-    using Couchbase.Core.Exceptions.KeyValue;
+    using Couchbase.KeyValue;
+    using Couchbase.Management.Buckets;
     using Couchbase.Management.Collections;
-    using Couchbase.Management.Query;
-    using Newtonsoft.Json;
     using Serilog;
-    using Tim.Backend.Models.KustoQuery;
-    using Tim.Backend.Models.Templates;
-    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Startup.Config;
 
     /// <summary>
-    /// Outlines the Database Client used byt the service.
+    /// Outlines the BucketName Client used byt the service.
     /// </summary>
     public class CouchbaseDbClient : IDatabaseClient
     {
@@ -33,8 +27,7 @@ namespace Tim.Backend.Providers.Database
         {
             Logger = Log.Logger;
 
-            Database = dbConfigs.DatabaseName;
-            Scope = dbConfigs.Scope;
+            BucketName = dbConfigs.BucketName;
             Configs = dbConfigs;
         }
 
@@ -46,12 +39,7 @@ namespace Tim.Backend.Providers.Database
         /// <summary>
         /// Gets the Couchbase bucket client is connected to.
         /// </summary>
-        public string Database { get; }
-
-        /// <summary>
-        /// Gets the Couchbase scope client is connected to.
-        /// </summary>
-        public string Scope { get; }
+        public string BucketName { get; }
 
         /// <summary>
         /// Gets or sets the db dbConfigs.
@@ -67,9 +55,9 @@ namespace Tim.Backend.Providers.Database
         /// Create a connection to the database.
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        public async Task ConnectDatabase()
+        public async Task Connect()
         {
-            Logger.Information($"CouchbaseDbClient is starting up for bucket {Configs.DatabaseName} scope {Configs.Scope}. ");
+            Logger.Information($"CouchbaseDbClient is starting up for bucket {Configs.BucketName}. ");
             CouchBaseClient = await Cluster.ConnectAsync(
                 Configs.DatabaseConnection,
                 new ClusterOptions
@@ -82,196 +70,60 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <summary>
-        /// Add or update an item in the database.
+        /// Test.
         /// </summary>
-        /// <typeparam name="T">Object that will be udpated.</typeparam>
-        /// <param name="partitionKey">Unique identified of the object.</param>
-        /// <param name="jsonObject">Object contents.</param>
-        /// <param name="collectionName">Name of the corresponding collection/table.</param>
-        /// <returns>Created db object or error.</returns>
-        public async Task<T> AddOrUpdateItem<T>(string partitionKey, string jsonObject, string collectionName)
-            where T : class
+        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        public async Task Initialize()
         {
-            try
-            {
-                var bucket = await CouchBaseClient.BucketAsync(Database);
-                var scope = await bucket.ScopeAsync(Scope);
-                var collection = await scope.CollectionAsync(collectionName);
-
-                // TODO there is likely a better way to do this just once at service start up for all collections
-                if (await CheckIfCollectionExists(collectionName, bucket))
-                {
-                    collection = await scope.CollectionAsync(collectionName);
-                }
-
-                var queryRunJsonEntity = new JsonEntity
-                {
-                    PartitionKey = partitionKey,
-                    Properties = jsonObject,
-                };
-
-                var upsertResult = await collection.UpsertAsync(partitionKey, jsonObject);
-                var getResult = await collection.GetAsync(partitionKey);
-
-                return JsonConvert.DeserializeObject<T>(getResult.ContentAs<string>());
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, "Database client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
-            }
+            await CouchBaseClient.WaitUntilReadyAsync(TimeSpan.FromMinutes(2));
+            await CreateBucketIfNotExists(BucketName);
         }
 
         /// <summary>
-        /// Gets an item from an existing collection based on partition key.
+        /// Connect to a couchbase collection.
         /// </summary>
-        /// <typeparam name="T">Object type.</typeparam>
-        /// <param name="partitionKey">Unique condition element is determined by.</param>
-        /// <param name="collectionName">Name of the collection/table.</param>
-        /// <returns>Item if found, null otherwise.</returns>
-        public async Task<T> GetItem<T>(string partitionKey, string collectionName)
-            where T : class
+        /// <param name="collectionName">The collection name.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        public async Task<ICouchbaseCollection> CollectionAsync(string collectionName)
         {
-            try
-            {
-                var bucket = await CouchBaseClient.BucketAsync(Database);
-                var scope = await bucket.ScopeAsync(Scope);
-                var collection = await scope.CollectionAsync(collectionName);
-
-                // TODO there is likely a better way to do this just once at service start up for all collections
-                if (await CheckIfCollectionExists(collectionName, bucket))
-                {
-                    collection = await scope.CollectionAsync(collectionName);
-                }
-
-                var getResult = await collection.GetAsync(partitionKey);
-
-                return JsonConvert.DeserializeObject<T>(getResult.ContentAs<string>());
-            }
-            catch (DocumentNotFoundException e)
-            {
-                // element not found
-                Logger.Error(e, $"Not able to find element with partition key {partitionKey}: " + e.ToString());
-                return null;
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, "Database client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
-            }
+            var bucket = await CouchBaseClient.BucketAsync(BucketName);
+            return await CreateCollectionIfNotExists(collectionName, bucket);
         }
 
-        /// <summary>
-        /// Returns all item in a given collection.
-        /// </summary>
-        /// <typeparam name="T">Object type.</typeparam>
-        /// <param name="collectionName">Name of the collection/table to query.</param>
-        /// <returns>List of items if any are present.</returns>
-        public async Task<IEnumerable<T>> GetItems<T>(string collectionName)
-            where T : class
+        private async Task<IBucket> CreateBucketIfNotExists(string bucketName)
         {
-            try
+            var buckets = await CouchBaseClient.Buckets.GetAllBucketsAsync();
+            if (!buckets.ContainsKey(bucketName))
             {
-                if (typeof(T) == typeof(QueryTemplate) && collectionName == Configs.QueryTemplatesContainerName)
+                await CouchBaseClient.Buckets.CreateBucketAsync(new BucketSettings
                 {
-                    var queryResult = await CouchBaseClient.QueryAsync<QueryTemplateJsonEntity>($"select  * from {Database}.{Scope}.{Configs.QueryTemplatesContainerName}");
-                    var rows3 = queryResult.ToListAsync();
-                    var result = new List<T>();
-                    foreach (var row in rows3.Result)
-                    {
-                        result.Add(JsonConvert.DeserializeObject<T>(Convert.ToString(row.QueryTemplate)));
-                    }
-
-                    return result;
-                }
-
-                if (typeof(T) == typeof(KustoQueryRun) && collectionName == Configs.QueryRunsContainerName)
-                {
-                    var queryResult = await CouchBaseClient.QueryAsync<QueryRunJsonEntity>($"select  * from {Database}.{Scope}.{Configs.QueryRunsContainerName}");
-                    var rows3 = queryResult.ToListAsync();
-                    var result = new List<T>();
-                    foreach (var row in rows3.Result)
-                    {
-                        result.Add(JsonConvert.DeserializeObject<T>(Convert.ToString(row.QueryRun)));
-                    }
-
-                    return result;
-                }
-
-                return null;
+                    BucketType = BucketType.Couchbase,
+                    Name = bucketName,
+                    NumReplicas = 0,
+                    RamQuotaMB = 100,
+                });
             }
-            catch (Exception e)
-            {
-                Logger.Error(e, "Database client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
 
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
-            }
+            var bucket = await CouchBaseClient.BucketAsync(bucketName);
+            await bucket.WaitUntilReadyAsync(TimeSpan.FromMinutes(2));
+            return bucket;
         }
 
-        /// <summary>
-        /// Deletes items from a given collection.
-        /// </summary>
-        /// <typeparam name="T">Object type.</typeparam>
-        /// <param name="partitionKey">Unique identified for item to delete.</param>
-        /// <param name="collectionName">Name of collection/table.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task DeleteItem<T>(string partitionKey, string collectionName)
-            where T : class
+        private async Task<ICouchbaseCollection> CreateCollectionIfNotExists(string collectionName, IBucket bucket)
         {
+            var scope = await bucket.DefaultScopeAsync();
+            var collectionSpec = new CollectionSpec(scope.Name, collectionName);
+
             try
             {
-                var bucket = await CouchBaseClient.BucketAsync(Database);
-                var scope = await bucket.ScopeAsync(Scope);
-                var collection = await scope.CollectionAsync(collectionName);
-
-                await collection.RemoveAsync(partitionKey);
-            }
-            catch (Exception e)
-            {
-                Logger.Error(e, "Database client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
-            }
-        }
-
-        private async Task<bool> CheckIfCollectionExists(string collectionName, IBucket bucket)
-        {
-            var collectionMgr = bucket.Collections;
-            try
-            {
-                var spec = new CollectionSpec(Scope, collectionName);
-                await collectionMgr.CreateCollectionAsync(spec);
-
-                var manager = CouchBaseClient.QueryIndexes;
-                await manager.CreatePrimaryIndexAsync(
-                    Database,
-                    new CreatePrimaryQueryIndexOptions()
-                        .ScopeName(Scope)
-                        .CollectionName(collectionName)
-                        .Deferred(false)
-                        .IgnoreIfExists(true));
-
-                return true;
+                await bucket.Collections.CreateCollectionAsync(collectionSpec);
             }
             catch (CollectionExistsException)
             {
                 Logger.Information($"Collection {collectionName} already exists.");
-                return false;
             }
+
+            return await bucket.CollectionAsync(collectionName);
         }
     }
 }

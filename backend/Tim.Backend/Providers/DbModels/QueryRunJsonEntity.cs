@@ -10,7 +10,7 @@ namespace Tim.Backend.Providers.DbModels
     /// <summary>
     /// Object that represents the Saved Query Run that gets read from the database.
     /// </summary>
-    public class QueryRunJsonEntity : JsonEntity
+    public class QueryRunJsonEntity : IJsonEntity
     {
         /// <summary>
         /// Gets or sets the saved query run metadata.

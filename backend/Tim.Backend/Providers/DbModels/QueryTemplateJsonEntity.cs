@@ -10,7 +10,7 @@ namespace Tim.Backend.Providers.DbModels
     /// <summary>
     /// Object that represents the Query templates that gets read from the database.
     /// </summary>
-    public class QueryTemplateJsonEntity : JsonEntity
+    public class QueryTemplateJsonEntity : IJsonEntity
     {
         /// <summary>
         /// Gets or Sets the Query template metadata.

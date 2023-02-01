@@ -8,12 +8,12 @@ namespace Tim.Backend.Providers.Helpers
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-    using Newtonsoft.Json;
     using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Models;
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Models.KustoQuery.Api;
     using Tim.Backend.Providers.Database;
+    using Tim.Backend.Providers.DbModels;
 
     /// <summary>
     /// Query run helper for on behalf of user queries.
@@ -24,27 +24,30 @@ namespace Tim.Backend.Providers.Helpers
         /// Populates all query specific metadata for non saved queries.
         /// </summary>
         /// <param name="queryRequest">Request that came into the api.</param>
-        /// <param name="dbClient">Database client.</param>
+        /// <param name="dbRepository">BucketName client.</param>
         /// <param name="ingestClient">Kusto Ingest client.</param>
         /// <param name="containerName">Name of the kusto query run collection.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Kusto query event to process that gets pass on to complete the request.</returns>
-        public static async Task<KustoQueryEventToProcess> ExecuteQueryHelper(KustoQueryExecuteRequest queryRequest, IDatabaseClient dbClient, KustoIngestClient ingestClient, string containerName, CancellationToken cancellationToken)
+        public static async Task<KustoQueryEventToProcess> ExecuteQueryHelper(KustoQueryExecuteRequest queryRequest, IDatabaseRepository<QueryRunJsonEntity> dbRepository, KustoIngestClient ingestClient, string containerName, CancellationToken cancellationToken)
         {
             var queryRunRecord = new KustoQueryRun(queryRequest.RequestedBy, Guid.Empty, queryRequest.StartTime, queryRequest.EndTime);
 
             // record the run even if there were no results
-            var queryRunRecordSaved = await dbClient.AddOrUpdateItem<KustoQueryRun>(queryRunRecord.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRunRecord), containerName);
-            await ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunRecordSaved }, containerName, cancellationToken);
+            var queryRunRecordSaved = await dbRepository.AddOrUpdateItem(queryRunRecord.QueryRunId.ToString(), new QueryRunJsonEntity
+            {
+                QueryRun = queryRunRecord,
+            });
+            await ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunRecordSaved.QueryRun }, containerName, cancellationToken);
 
             // pre make a query execution thing
             var queryToRun = new KustoQueryEventToProcess
             {
-                QueryRunId = queryRunRecordSaved.QueryRunId,
+                QueryRunId = queryRunRecordSaved.QueryRun.QueryRunId,
                 QueryId = Guid.Empty,
                 Query = queryRequest.Query,
-                StartTime = queryRunRecordSaved.QueryStartDateTimeUtc,
-                EndTime = queryRunRecordSaved.QueryEndDateTimeUtc,
+                StartTime = queryRunRecordSaved.QueryRun.QueryStartDateTimeUtc,
+                EndTime = queryRunRecordSaved.QueryRun.QueryEndDateTimeUtc,
                 Cluster = queryRequest.Cluster,
                 Database = queryRequest.Database,
             };
