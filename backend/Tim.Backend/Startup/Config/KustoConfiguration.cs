@@ -51,6 +51,18 @@ namespace Tim.Backend.Startup.Config
         public string KustoDatabase { get; set; } = Environment.GetEnvironmentVariable("KUSTO_DATABASE_NAME") ?? "Research";
 
         /// <summary>
+        /// Gets or sets the query template table name.
+        /// </summary>
+        [Required]
+        public string QueryTemplatesTableName { get; set; } = Environment.GetEnvironmentVariable("QUERY_TEMPLATE_TABLE_NAME") ?? "QueryTemplate";
+
+        /// <summary>
+        /// Gets or sets the Saved query run table name.
+        /// </summary>
+        [Required]
+        public string QueryRunsTableName { get; set; } = Environment.GetEnvironmentVariable("QUERY_RUN_TABLE_NAME") ?? "QueryRun";
+
+        /// <summary>
         /// Ensures that all required values are populated.
         /// </summary>
         /// <exception cref="AggregateException">Throws exception if values are not populated. </exception>

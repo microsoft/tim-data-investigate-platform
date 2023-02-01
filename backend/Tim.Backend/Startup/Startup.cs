@@ -73,6 +73,7 @@ namespace Tim.Backend.Startup
                 });
 
             services.AddSwagger(Configuration);
+            services.AddCouchBase(Configuration);
         }
 
         /// <summary>

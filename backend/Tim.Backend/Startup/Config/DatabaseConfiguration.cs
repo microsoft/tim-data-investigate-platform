@@ -10,7 +10,7 @@ namespace Tim.Backend.Startup.Config
     using System.Linq;
 
     /// <summary>
-    /// Database bucket, scope and collection names.
+    /// BucketName bucket, scope and collection names.
     /// </summary>
     public class DatabaseConfiguration
     {
@@ -43,25 +43,7 @@ namespace Tim.Backend.Startup.Config
         /// Gets or sets the database name.
         /// </summary>
         [Required]
-        public string DatabaseName { get; set; } = Environment.GetEnvironmentVariable("DATABASE_NAME") ?? "default";
-
-        /// <summary>
-        /// Gets or sets the scope.
-        /// </summary>
-        [Required]
-        public string Scope { get; set; } = Environment.GetEnvironmentVariable("DATABASE_SCOPE_NAME") ?? "_default";
-
-        /// <summary>
-        /// Gets or sets the query template collection name.
-        /// </summary>
-        [Required]
-        public string QueryTemplatesContainerName { get; set; } = Environment.GetEnvironmentVariable("QUERY_TEMPLATE_TABLE_NAME") ?? "QueryTemplate";
-
-        /// <summary>
-        /// Gets or sets the Saved query run collection name.
-        /// </summary>
-        [Required]
-        public string QueryRunsContainerName { get; set; } = Environment.GetEnvironmentVariable("QUERY_RUN_TABLE_NAME") ?? "QueryRun";
+        public string BucketName { get; set; } = Environment.GetEnvironmentVariable("DATABASE_NAME") ?? "default";
 
         /// <summary>
         /// Ensures that all required values are populated.

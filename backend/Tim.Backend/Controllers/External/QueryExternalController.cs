@@ -17,9 +17,9 @@ namespace Tim.Backend.Controllers.External
     using Serilog;
     using StackExchange.Redis;
     using Tim.Backend.DataProviders.Clients;
-    using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Models.KustoQuery.Api;
     using Tim.Backend.Providers.Database;
+    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Providers.Helpers;
     using Tim.Backend.Providers.Readers;
     using Tim.Backend.Providers.Writers.KustoQuery;
@@ -38,8 +38,8 @@ namespace Tim.Backend.Controllers.External
         private readonly KustoQueryClient m_kustoQueryClient;
         private readonly IKustoUserReader m_userReader;
         private readonly IKustoQueryWorker m_kustoQueryExecutor;
-        private readonly IOptions<DatabaseConfiguration> m_dbConfigs;
-        private readonly IDatabaseClient m_dbClient;
+        private readonly IOptions<KustoConfiguration> m_kustoConfigs;
+        private readonly IDatabaseRepository<QueryRunJsonEntity> m_dbRepository;
         private readonly IConnectionMultiplexer m_redisConnection;
         private readonly ILogger m_logger;
 
@@ -54,8 +54,8 @@ namespace Tim.Backend.Controllers.External
         /// <param name="kustoQueryClient">Kusto client that represents connection to Kusto used for executing queries.</param>
         /// <param name="tokenAcquisition">Process that gets OBO token for auth.</param>
         /// <param name="kustoQueryworker">Spins up OBO kusto flow.</param>
-        /// <param name="configsDb">Represents appropriate configurations.</param>
-        /// <param name="idbClient">Database client.</param>
+        /// <param name="kustoConfigs">Kusto configuration.</param>
+        /// <param name="dbRepository">Database repository of operations.</param>
         /// <param name="connectionMultiplexer">Redis location to temp store query results.</param>
         public QueryExternalController(
             IKustoUserReader userKustoReader,
@@ -63,15 +63,15 @@ namespace Tim.Backend.Controllers.External
             KustoQueryClient kustoQueryClient,
             ITokenAcquisition tokenAcquisition,
             IKustoQueryWorker kustoQueryworker,
-            IOptions<DatabaseConfiguration> configsDb,
-            IDatabaseClient idbClient,
+            IOptions<KustoConfiguration> kustoConfigs,
+            IDatabaseRepository<QueryRunJsonEntity> dbRepository,
             IConnectionMultiplexer connectionMultiplexer)
         {
             m_userReader = userKustoReader;
             m_ingestClient = kustoClient;
             m_kustoQueryExecutor = kustoQueryworker;
-            m_dbClient = idbClient;
-            m_dbConfigs = configsDb;
+            m_dbRepository = dbRepository;
+            m_kustoConfigs = kustoConfigs;
             m_redisConnection = connectionMultiplexer;
             m_kustoQueryClient = kustoQueryClient;
             m_logger = Log.Logger;
@@ -105,12 +105,12 @@ namespace Tim.Backend.Controllers.External
                         title: "Kusto Query must be specified. "));
                 }
 
-                var queryRunRecord = await QueryRunHelper.ExecuteQueryHelper(queryRequest, m_dbClient, m_ingestClient, m_dbConfigs.Value.QueryRunsContainerName, cancellationToken);
+                var queryRunRecord = await QueryRunHelper.ExecuteQueryHelper(queryRequest, m_dbRepository, m_ingestClient, m_kustoConfigs.Value.QueryRunsTableName, cancellationToken);
 
                 // TODO 2022-10-07 - switch to app id/key for kusto queries - will revert back to user executes queries once we have a chance to refactor auth
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 #pragma warning disable IDE0058 // Expression value is never used
-                Task.Run(() => m_kustoQueryExecutor.RunQuery(string.Empty, queryRunRecord, m_userReader, m_dbClient, m_kustoQueryClient, m_dbConfigs.Value, CancellationToken.None));
+                Task.Run(() => m_kustoQueryExecutor.RunQuery(string.Empty, queryRunRecord, m_userReader, m_dbRepository, m_kustoQueryClient, m_kustoConfigs.Value.QueryRunsTableName, CancellationToken.None));
 #pragma warning restore IDE0058 // Expression value is never used
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 return new KustoQueryTriggerResponse(queryRunRecord.QueryRunId, "Query has been queued. ");
@@ -136,7 +136,7 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<KustoQueryRunActionResponse>> CheckQueryStatus(string queryRunId, CancellationToken cancellationToken)
         {
-            var queryRun = await m_dbClient.GetItem<KustoQueryRun>(queryRunId, m_dbConfigs.Value.QueryRunsContainerName);
+            var queryRun = (await m_dbRepository.GetItem(queryRunId)).QueryRun;
 
             if (queryRun == null)
             {
@@ -184,7 +184,10 @@ namespace Tim.Backend.Controllers.External
                 {
                     queryRun.Status = QueryRunStates.TimedOut;
 #pragma warning disable IDE0058 // Expression value is never used
-                    await m_dbClient.AddOrUpdateItem<KustoQueryRun>(queryRun.QueryRunId.ToString(), JsonConvert.SerializeObject(queryRun), m_dbConfigs.Value.QueryRunsContainerName);
+                    await m_dbRepository.AddOrUpdateItem(queryRun.QueryRunId.ToString(), new QueryRunJsonEntity
+                    {
+                        QueryRun = queryRun,
+                    });
 #pragma warning restore IDE0058 // Expression value is never used
                 }
 
