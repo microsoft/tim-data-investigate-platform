@@ -23,8 +23,9 @@ namespace Tim.Backend.Startup
     using Serilog;
     using StackExchange.Redis;
     using Tim.Backend.DataProviders.Clients;
+    using Tim.Backend.Models.KustoQuery;
+    using Tim.Backend.Models.Templates;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Providers.Readers;
     using Tim.Backend.Providers.Writers.KustoQuery;
     using Tim.Backend.Startup;
@@ -137,13 +138,104 @@ namespace Tim.Backend.Startup
             }
 
             // create  kusto and database configuration since it is not being loaded from services set up, but grabbing either env or default values
-            var redisConfigs = configuration.GetSection(nameof(RedisConfiguration)).Get<RedisConfiguration>() ?? new RedisConfiguration();
-            var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
             var authConfigs = configuration.GetSection(nameof(AuthConfiguration)).Get<AuthConfiguration>() ?? new AuthConfiguration();
-
-            redisConfigs.Validate();
-            kustoConfigs.Validate();
             authConfigs.Validate();
+
+            var authenticationSchemes = new List<string>();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfigs.SigningKey)),
+                    };
+                });
+
+            services.AddPolicyRegistry();
+
+            services.AddSingleton<ISharedCache, InMemoryCache>();
+        }
+
+        /// <summary>
+        /// Initialization code for the database client.
+        /// </summary>
+        /// <param name="host">The host object to modify.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task InitializeDatabaseAsync(this IWebHost host)
+        {
+            if (host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
+            var scope = host.Services.CreateScope();
+            var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
+            await dbService.Connect();
+            await dbService.Initialize();
+        }
+
+        /// <summary>
+        /// Add couchbase service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddCouchBase(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            dbConfigs.Validate();
+
+            var cbClient = new CouchbaseDbClient(dbConfigs);
+            services.AddScoped<IDatabaseClient, CouchbaseDbClient>(p => cbClient);
+            services.AddScoped<IDatabaseRepository<KustoQueryRun>, CouchbaseRepository<KustoQueryRun>>(p => new CouchbaseRepository<KustoQueryRun>(cbClient));
+            services.AddScoped<IDatabaseRepository<QueryTemplate>, CouchbaseRepository<QueryTemplate>>(p => new CouchbaseRepository<QueryTemplate>(cbClient));
+        }
+
+        /// <summary>
+        /// Add redis service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddRedis(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var redisConfigs = configuration.GetSection(nameof(RedisConfiguration)).Get<RedisConfiguration>() ?? new RedisConfiguration();
+            redisConfigs.Validate();
+
+            services.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(p =>
+            {
+                var endpoints = new EndPointCollection();
+                redisConfigs.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
+                return ConnectionMultiplexer.Connect(
+                    new ConfigurationOptions()
+                    {
+                        EndPoints = endpoints,
+                        Password = redisConfigs.RedisPassword,
+                    });
+            });
+        }
+
+        /// <summary>
+        /// Add Kusto service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddKusto(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
+            kustoConfigs.Validate();
 
             services.AddSingleton(p =>
             {
@@ -175,77 +267,9 @@ namespace Tim.Backend.Startup
                 return new KustoQueryClient(connectionString);
             });
 
-            var authenticationSchemes = new List<string>();
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfigs.SigningKey)),
-                    };
-                });
-
-            services.AddPolicyRegistry();
-
             services.AddSingleton<IKustoQueryWorker, RunKustoQueryWorker>();
 
-            services.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(p =>
-            {
-                var endpoints = new EndPointCollection();
-                redisConfigs.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
-                return ConnectionMultiplexer.Connect(
-                    new ConfigurationOptions()
-                    {
-                        EndPoints = endpoints,
-                        Password = redisConfigs.RedisPassword,
-                    });
-            });
-
             services.AddScoped<IKustoUserReader, KustoUserReader>();
-
-            services.AddSingleton<ISharedCache, InMemoryCache>();
-        }
-
-        /// <summary>
-        /// Initialization code for the database client.
-        /// </summary>
-        /// <param name="host">The host object to modify.</param>
-        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public static async Task InitializeDatabaseAsync(this IWebHost host)
-        {
-            if (host == null)
-            {
-                throw new ArgumentNullException(nameof(host));
-            }
-
-            var scope = host.Services.CreateScope();
-            var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
-            await dbService.Connect();
-            await dbService.Initialize();
-        }
-
-        /// <summary>
-        /// Add couchbase connections.
-        /// </summary>
-        /// <param name="services">Collection of services.</param>
-        /// <param name="configuration">Defined configuration.</param>
-        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
-        public static void AddCouchBase(
-            this IServiceCollection services,
-            IConfiguration configuration)
-        {
-            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
-            dbConfigs.Validate();
-
-            var cbClient = new CouchbaseDbClient(dbConfigs);
-            services.AddScoped<IDatabaseClient, CouchbaseDbClient>(p => cbClient);
-            services.AddScoped<IDatabaseRepository<QueryRunJsonEntity>, CouchbaseRepository<QueryRunJsonEntity>>(p => new CouchbaseRepository<QueryRunJsonEntity>(cbClient));
-            services.AddScoped<IDatabaseRepository<QueryTemplateJsonEntity>, CouchbaseRepository<QueryTemplateJsonEntity>>(p => new CouchbaseRepository<QueryTemplateJsonEntity>(cbClient));
         }
 
         /// <summary>

@@ -6,16 +6,19 @@ namespace Tim.Backend.Providers.Database
 {
     using System;
     using System.Threading.Tasks;
-
     using Couchbase;
     using Couchbase.KeyValue;
     using Couchbase.Management.Buckets;
     using Couchbase.Management.Collections;
+    using Couchbase.Management.Query;
     using Serilog;
+    using Tim.Backend.Models;
+    using Tim.Backend.Models.KustoQuery;
+    using Tim.Backend.Models.Templates;
     using Tim.Backend.Startup.Config;
 
     /// <summary>
-    /// Outlines the BucketName Client used byt the service.
+    /// Manages the connection and initialization for the couchbase database.
     /// </summary>
     public class CouchbaseDbClient : IDatabaseClient
     {
@@ -42,14 +45,29 @@ namespace Tim.Backend.Providers.Database
         public string BucketName { get; }
 
         /// <summary>
-        /// Gets or sets the db dbConfigs.
+        /// Gets or sets the database configs.
         /// </summary>
         public DatabaseConfiguration Configs { get; set; }
+
+        /// <summary>
+        /// Gets or sets the bucket after initialization.
+        /// </summary>
+        public IBucket Bucket { get; set; }
 
         /// <summary>
         /// Gets the logger.
         /// </summary>
         protected ILogger Logger { get; }
+
+        /// <summary>
+        /// Generate the collection name for this entity type.
+        /// </summary>
+        /// <typeparam name="T">Entity type.</typeparam>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        public static string GetCollectionName<T>()
+        {
+            return typeof(T).Name;
+        }
 
         /// <summary>
         /// Create a connection to the database.
@@ -65,6 +83,7 @@ namespace Tim.Backend.Providers.Database
                     UserName = Configs.DbUserName,
                     Password = Configs.DbUserPassword,
                     KvTimeout = TimeSpan.FromSeconds(10),
+                    /*Serializer = new DefaultSerializer(settings, settings),*/
                 });
             Logger.Information($"CouchbaseDbClient has been created.");
         }
@@ -75,23 +94,84 @@ namespace Tim.Backend.Providers.Database
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         public async Task Initialize()
         {
+            if (CouchBaseClient is null)
+            {
+                throw new InvalidOperationException("CouchBaseClient must be initialized with a connection.");
+            }
+
             await CouchBaseClient.WaitUntilReadyAsync(TimeSpan.FromMinutes(2));
-            await CreateBucketIfNotExists(BucketName);
+            Bucket = await CreateBucketIfNotExists(BucketName);
+            await CreateCollectionIfNotExists<KustoQueryRun>();
+            await CreateCollectionIfNotExists<QueryTemplate>();
         }
 
         /// <summary>
         /// Connect to a couchbase collection.
         /// </summary>
-        /// <param name="collectionName">The collection name.</param>
+        /// <typeparam name="T">Entity type.</typeparam>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        public async Task<ICouchbaseCollection> CollectionAsync(string collectionName)
+        public async Task<ICouchbaseCollection> CollectionAsync<T>()
+            where T : IJsonEntity
         {
-            var bucket = await CouchBaseClient.BucketAsync(BucketName);
-            return await CreateCollectionIfNotExists(collectionName, bucket);
+            if (Bucket is null)
+            {
+                throw new InvalidOperationException("Bucket must be initialized.");
+            }
+
+            var collectionName = GetCollectionName<T>();
+            return await Bucket.CollectionAsync(collectionName);
+        }
+
+        /// <summary>
+        /// Get the default scope name for this bucket.
+        /// </summary>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        public async Task<string> GetScopeName()
+        {
+            var scope = await Bucket.DefaultScopeAsync();
+            return scope.Name;
+        }
+
+        private async Task CreateCollectionIfNotExists<T>()
+        {
+            if (Bucket is null)
+            {
+                throw new InvalidOperationException("Bucket must be initialized.");
+            }
+
+            var collectionName = GetCollectionName<T>();
+            var scopeName = await GetScopeName();
+            var collectionSpec = new CollectionSpec(scopeName, collectionName);
+
+            try
+            {
+                var retries = 0;
+                while (retries++ < 3)
+                {
+                    await Bucket.Collections.CreateCollectionAsync(collectionSpec);
+                    await Task.Delay(TimeSpan.FromMilliseconds(retries * 500));
+                }
+            }
+            catch (CollectionExistsException)
+            {
+                Logger.Information($"Collection {collectionName} already exists.");
+            }
+
+            await CouchBaseClient.QueryIndexes.CreatePrimaryIndexAsync(
+                BucketName,
+                new CreatePrimaryQueryIndexOptions()
+                    .ScopeName(scopeName)
+                    .CollectionName(collectionName)
+                    .IgnoreIfExists(true));
         }
 
         private async Task<IBucket> CreateBucketIfNotExists(string bucketName)
         {
+            if (CouchBaseClient is null)
+            {
+                throw new InvalidOperationException("CouchBaseClient must be initialized with a connection.");
+            }
+
             var buckets = await CouchBaseClient.Buckets.GetAllBucketsAsync();
             if (!buckets.ContainsKey(bucketName))
             {
@@ -105,25 +185,8 @@ namespace Tim.Backend.Providers.Database
             }
 
             var bucket = await CouchBaseClient.BucketAsync(bucketName);
-            await bucket.WaitUntilReadyAsync(TimeSpan.FromMinutes(2));
+
             return bucket;
-        }
-
-        private async Task<ICouchbaseCollection> CreateCollectionIfNotExists(string collectionName, IBucket bucket)
-        {
-            var scope = await bucket.DefaultScopeAsync();
-            var collectionSpec = new CollectionSpec(scope.Name, collectionName);
-
-            try
-            {
-                await bucket.Collections.CreateCollectionAsync(collectionSpec);
-            }
-            catch (CollectionExistsException)
-            {
-                Logger.Information($"Collection {collectionName} already exists.");
-            }
-
-            return await bucket.CollectionAsync(collectionName);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace Tim.Backend.Models.Templates
     /// <summary>
     /// Class that defines query template.
     /// </summary>
-    public class QueryTemplate : IValidatableObject
+    public class QueryTemplate : IValidatableObject, IJsonEntity
     {
         /// <summary>
         /// Gets or sets the uuid for a given query template.
@@ -139,99 +139,6 @@ namespace Tim.Backend.Models.Templates
             if (QueryType == QueryType.Query && (Fields == null || !Fields.Any()))
             {
                 yield return new ValidationResult("'fields' field is required if query type is 'query'");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Define Query params.
-    /// </summary>
-#pragma warning disable SA1402 // File may only contain a single type
-    public class QueryParam : IValidatableObject
-#pragma warning restore SA1402 // File may only contain a single type
-    {
-        /// <summary>
-        /// Gets or sets object.
-        /// </summary>
-        public object Default { get; set; }
-
-        /// <summary>
-        /// Gets or sets type.
-        /// </summary>
-        [Required]
-        public string Type { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the param is optional.
-        /// </summary>
-        public bool? Optional { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether there param are multiple params.
-        /// </summary>
-        public bool? Multiple { get; set; }
-
-        /// <summary>
-        /// Gets or sets query param hint.
-        /// </summary>
-        public string Hint { get; set; }
-
-        /// <summary>
-        /// Gets or sets query param values.
-        /// </summary>
-        public IEnumerable<string> Values { get; set; }
-
-        /// <summary>
-        /// Validate that all required fields are present as expected.
-        /// </summary>
-        /// <param name="validationContext">validation context.</param>
-        /// <returns>Any located errors.</returns>
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (Type == "array" && (Values == null || !Values.Any()))
-            {
-                yield return new ValidationResult("'values' field is required if type is 'array'");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Defines query field params.
-    /// </summary>
-#pragma warning disable SA1402 // File may only contain a single type
-    public class QueryField : IValidatableObject
-#pragma warning restore SA1402 // File may only contain a single type
-    {
-        /// <summary>
-        /// Gets or sets query field type.
-        /// </summary>
-        [Required]
-        public string Type { get; set; }
-
-        /// <summary>
-        /// Gets or sets query field origin.
-        /// </summary>
-        public string From { get; set; }
-
-        /// <summary>
-        /// Gets or sets query field regex.
-        /// </summary>
-        public string Regex { get; set; }
-
-        /// <summary>
-        /// Validate that all required fields are present as expected.
-        /// </summary>
-        /// <param name="validationContext">validation context.</param>
-        /// <returns>Any located errors.</returns>
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (Type == "multiple" && string.IsNullOrWhiteSpace(From))
-            {
-                yield return new ValidationResult("'from' field is required if type is 'multiple'");
-            }
-            else if (Type == "match" && string.IsNullOrWhiteSpace(Regex))
-            {
-                yield return new ValidationResult("'regex' field is required if type is 'match'");
             }
         }
     }

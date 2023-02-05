@@ -16,7 +16,6 @@ namespace Tim.Backend.Controllers.External
     using Microsoft.AspNetCore.Mvc;
     using Tim.Backend.Models.Templates;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.DbModels;
 
     /// <summary>
     /// API endpoints for working with query templates.
@@ -26,14 +25,14 @@ namespace Tim.Backend.Controllers.External
     [Authorize]
     public class QueryTemplatesExternalController : ControllerBase
     {
-        private readonly IDatabaseRepository<QueryTemplateJsonEntity> m_dbRepository;
+        private readonly IDatabaseRepository<QueryTemplate> m_dbRepository;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="QueryTemplatesExternalController"/> class.
         /// </summary>
         /// <param name="dbRepository">Database operator.</param>
         public QueryTemplatesExternalController(
-            IDatabaseRepository<QueryTemplateJsonEntity> dbRepository)
+            IDatabaseRepository<QueryTemplate> dbRepository)
         {
             m_dbRepository = dbRepository;
         }
@@ -48,15 +47,21 @@ namespace Tim.Backend.Controllers.External
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<QueryTemplate>>> Get(CancellationToken cancellationToken, DateTime? since, bool includeDeleted)
+        public async Task<ActionResult<IEnumerable<QueryTemplate>>> Get(CancellationToken cancellationToken, DateTime? since, bool? includeDeleted)
         {
-            var results = await m_dbRepository.GetItems();
+            var results = await m_dbRepository.GetItemsAsync();
 
-            // TODO: should investigate how we can do this better using the db, this is a placeholder functionality for now
-            return Ok(
-                results
-                .Select(result => result.QueryTemplate)
-                .Where(each => each.IsDeleted == includeDeleted && each.Updated > since));
+            if (includeDeleted == false)
+            {
+                results = results.Where(each => !each.IsDeleted);
+            }
+
+            if (since != null)
+            {
+                results = results.Where(each => each.Updated > since);
+            }
+
+            return Ok(results);
         }
 
         /// <summary>
@@ -69,9 +74,9 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<QueryTemplate>> Get(Guid uuid)
         {
-            var result = await m_dbRepository.GetItem(uuid.ToString());
+            var result = await m_dbRepository.GetItemAsync(uuid.ToString());
 
-            return result == null ? NotFound() : Ok(result.QueryTemplate);
+            return result == null ? NotFound() : Ok(result);
         }
 
         /// <summary>
@@ -84,7 +89,7 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] QueryTemplate template)
         {
-            if (await m_dbRepository.GetItem(template.Uuid.ToString()) != null)
+            if (await m_dbRepository.GetItemAsync(template.Uuid.ToString()) != null)
             {
                 return BadRequest("A template with this UUID already exists");
             }
@@ -93,12 +98,7 @@ namespace Tim.Backend.Controllers.External
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
 
-#pragma warning disable IDE0058 // Expression value is never used
-            await m_dbRepository.AddOrUpdateItem(template.Uuid.ToString(), new QueryTemplateJsonEntity
-            {
-                QueryTemplate = template,
-            });
-#pragma warning restore IDE0058 // Expression value is never used
+            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
 
             return Ok();
         }
@@ -122,12 +122,7 @@ namespace Tim.Backend.Controllers.External
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
 
-#pragma warning disable IDE0058 // Expression value is never used
-            await m_dbRepository.AddOrUpdateItem(template.Uuid.ToString(), new QueryTemplateJsonEntity
-            {
-                QueryTemplate = template,
-            });
-#pragma warning restore IDE0058 // Expression value is never used
+            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
 
             return Ok();
         }
@@ -149,7 +144,7 @@ namespace Tim.Backend.Controllers.External
                 return BadRequest("Missing patch");
             }
 
-            var template = (await m_dbRepository.GetItem(uuid.ToString())).QueryTemplate;
+            var template = await m_dbRepository.GetItemAsync(uuid.ToString());
 
             if (template == null)
             {
@@ -165,12 +160,7 @@ namespace Tim.Backend.Controllers.External
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
 
-#pragma warning disable IDE0058 // Expression value is never used
-            await m_dbRepository.AddOrUpdateItem(template.Uuid.ToString(), new QueryTemplateJsonEntity
-            {
-                QueryTemplate = template,
-            });
-#pragma warning restore IDE0058 // Expression value is never used
+            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
 
             return NoContent();
         }
@@ -185,17 +175,12 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Delete(Guid uuid)
         {
-            var template = (await m_dbRepository.GetItem(uuid.ToString())).QueryTemplate;
+            var template = await m_dbRepository.GetItemAsync(uuid.ToString());
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
             template.IsDeleted = true;
 
-#pragma warning disable IDE0058 // Expression value is never used
-            await m_dbRepository.AddOrUpdateItem(template.Uuid.ToString(), new QueryTemplateJsonEntity
-            {
-                QueryTemplate = template,
-            });
-#pragma warning restore IDE0058 // Expression value is never used
+            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
 
             return NoContent();
         }

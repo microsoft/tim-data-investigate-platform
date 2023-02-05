@@ -10,9 +10,8 @@ namespace Tim.Backend.Providers.Database
     using System.Threading.Tasks;
     using Couchbase.Core.Exceptions.KeyValue;
     using Couchbase.KeyValue;
-    using Couchbase.KeyValue.RangeScan;
     using Serilog;
-    using Tim.Backend.Providers.DbModels;
+    using Tim.Backend.Models;
 
     /// <summary>
     /// Outlines the BucketName Client used byt the service.
@@ -29,9 +28,14 @@ namespace Tim.Backend.Providers.Database
         {
             Logger = Log.Logger;
 
-            var collectionName = typeof(TJsonEntity).Name;
-            Collection = dbClient.CollectionAsync(collectionName);
+            DatabaseClient = dbClient;
+            Collection = DatabaseClient.CollectionAsync<TJsonEntity>();
         }
+
+        /// <summary>
+        /// Gets or sets the Couchbase db client.
+        /// </summary>
+        public CouchbaseDbClient DatabaseClient { get; set; }
 
         /// <summary>
         /// Gets or sets the Couchbase db client.
@@ -49,7 +53,7 @@ namespace Tim.Backend.Providers.Database
         /// <param name="id">Unique identified of the object.</param>
         /// <param name="entity">Object contents.</param>
         /// <returns>Created db object or error.</returns>
-        public async Task<TJsonEntity> AddOrUpdateItem(string id, IJsonEntity entity)
+        public async Task<TJsonEntity> AddOrUpdateItemAsync(string id, IJsonEntity entity)
         {
             try
             {
@@ -62,11 +66,7 @@ namespace Tim.Backend.Providers.Database
             catch (Exception e)
             {
                 Logger.Error(e, "BucketName client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
+                throw;
             }
         }
 
@@ -75,7 +75,7 @@ namespace Tim.Backend.Providers.Database
         /// </summary>
         /// <param name="id">Unique condition element is determined by.</param>
         /// <returns>Item if found, null otherwise.</returns>
-        public async Task<TJsonEntity> GetItem(string id)
+        public async Task<TJsonEntity> GetItemAsync(string id)
         {
             try
             {
@@ -93,11 +93,7 @@ namespace Tim.Backend.Providers.Database
             catch (Exception e)
             {
                 Logger.Error(e, "BucketName client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
+                throw;
             }
         }
 
@@ -105,22 +101,21 @@ namespace Tim.Backend.Providers.Database
         /// Returns all item in a given collection.
         /// </summary>
         /// <returns>List of items if any are present.</returns>
-        public async Task<IEnumerable<TJsonEntity>> GetItems()
+        public async Task<IEnumerable<TJsonEntity>> GetItemsAsync()
         {
             try
             {
-                var collection = await Collection;
-                var queryResult = collection.ScanAsync(new RangeScan(ScanTerm.Minimum(), ScanTerm.Maximum()));
-                return await queryResult.Select(result => result.ContentAs<TJsonEntity>()).ToListAsync();
+                var bucket = DatabaseClient.Bucket;
+                var scope = await bucket.DefaultScopeAsync();
+                var collectionName = CouchbaseDbClient.GetCollectionName<TJsonEntity>();
+                var queryResult = await scope.QueryAsync<TJsonEntity>($"SELECT d.* FROM {collectionName} d");
+
+                return await queryResult.Rows.ToListAsync();
             }
             catch (Exception e)
             {
                 Logger.Error(e, "BucketName client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
+                throw;
             }
         }
 
@@ -129,7 +124,7 @@ namespace Tim.Backend.Providers.Database
         /// </summary>
         /// <param name="id">Unique identified for item to delete.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task DeleteItem(string id)
+        public async Task DeleteItemAsync(string id)
         {
             try
             {
@@ -139,11 +134,7 @@ namespace Tim.Backend.Providers.Database
             catch (Exception e)
             {
                 Logger.Error(e, "BucketName client failed with error: " + e.ToString());
-#pragma warning disable CA2200 // Rethrow to preserve stack details
-
-                // TODO rethink how we want to do this, or is logging the error once logging is set up enough, no need to throw?
-                throw e;
-#pragma warning restore CA2200 // Rethrow to preserve stack details
+                throw;
             }
         }
     }

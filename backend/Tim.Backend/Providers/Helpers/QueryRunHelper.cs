@@ -13,7 +13,6 @@ namespace Tim.Backend.Providers.Helpers
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Models.KustoQuery.Api;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.DbModels;
 
     /// <summary>
     /// Query run helper for on behalf of user queries.
@@ -29,25 +28,22 @@ namespace Tim.Backend.Providers.Helpers
         /// <param name="containerName">Name of the kusto query run collection.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Kusto query event to process that gets pass on to complete the request.</returns>
-        public static async Task<KustoQueryEventToProcess> ExecuteQueryHelper(KustoQueryExecuteRequest queryRequest, IDatabaseRepository<QueryRunJsonEntity> dbRepository, KustoIngestClient ingestClient, string containerName, CancellationToken cancellationToken)
+        public static async Task<KustoQueryEventToProcess> ExecuteQueryHelper(KustoQueryExecuteRequest queryRequest, IDatabaseRepository<KustoQueryRun> dbRepository, KustoIngestClient ingestClient, string containerName, CancellationToken cancellationToken)
         {
             var queryRunRecord = new KustoQueryRun(queryRequest.RequestedBy, Guid.Empty, queryRequest.StartTime, queryRequest.EndTime);
 
             // record the run even if there were no results
-            var queryRunRecordSaved = await dbRepository.AddOrUpdateItem(queryRunRecord.QueryRunId.ToString(), new QueryRunJsonEntity
-            {
-                QueryRun = queryRunRecord,
-            });
-            await ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunRecordSaved.QueryRun }, containerName, cancellationToken);
+            var queryRunRecordSaved = await dbRepository.AddOrUpdateItemAsync(queryRunRecord.QueryRunId.ToString(), queryRunRecord);
+            await ingestClient.WriteAsync(new List<KustoQueryRun>() { queryRunRecordSaved }, containerName, cancellationToken);
 
             // pre make a query execution thing
             var queryToRun = new KustoQueryEventToProcess
             {
-                QueryRunId = queryRunRecordSaved.QueryRun.QueryRunId,
+                QueryRunId = queryRunRecordSaved.QueryRunId,
                 QueryId = Guid.Empty,
                 Query = queryRequest.Query,
-                StartTime = queryRunRecordSaved.QueryRun.QueryStartDateTimeUtc,
-                EndTime = queryRunRecordSaved.QueryRun.QueryEndDateTimeUtc,
+                StartTime = queryRunRecordSaved.QueryStartDateTimeUtc,
+                EndTime = queryRunRecordSaved.QueryEndDateTimeUtc,
                 Cluster = queryRequest.Cluster,
                 Database = queryRequest.Database,
             };

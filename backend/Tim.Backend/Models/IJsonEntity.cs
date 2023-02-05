@@ -2,10 +2,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
-namespace Tim.Backend.Providers.DbModels
+namespace Tim.Backend.Models
 {
     /// <summary>
-    /// Interface for a collection.
+    /// Interface for a Json Entity.
     /// </summary>
     public interface IJsonEntity
     {

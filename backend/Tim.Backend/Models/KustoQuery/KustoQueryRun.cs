@@ -8,12 +8,38 @@ namespace Tim.Backend.Models.KustoQuery
     using Tim.Backend.DataProviders.Clients;
 
     /// <summary>
+    /// Query Run states.
+    /// </summary>
+    public enum QueryRunStates
+    {
+        /// <summary>
+        /// Query first created.
+        /// </summary>
+        Created,
+
+        /// <summary>
+        /// Query completed.
+        /// </summary>
+        Completed,
+
+        /// <summary>
+        /// Query had an error.
+        /// </summary>
+        Error,
+
+        /// <summary>
+        /// Query timed out.
+        /// </summary>
+        TimedOut,
+    }
+
+    /// <summary>
     /// This object represents an instance of an executed query
     /// Query can be a saved one or simply a temporary one that was passed over via a request
     /// In tha same the query is temporary, the Query GUid will be an empty Guid
     /// otherwise the query guid will represent the Guid that can be used to find the actual query in the SavedQueries table in cosmosdb.
     /// </summary>
-    public class KustoQueryRun
+    public class KustoQueryRun : IJsonEntity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoQueryRun"/> class.
@@ -38,19 +64,6 @@ namespace Tim.Backend.Models.KustoQuery
         /// </summary>
         public KustoQueryRun()
         {
-        }
-
-        /// <summary>
-        /// Query Run states.
-        /// </summary>
-        public enum QueryRunStates
-        {
-#pragma warning disable SA1602 // Enumeration items should be documented
-            Created,
-            Completed,
-            Error,
-            TimedOut,
-#pragma warning restore SA1602 // Enumeration items should be documented
         }
 
         /// <summary>

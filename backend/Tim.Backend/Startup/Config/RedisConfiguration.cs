@@ -30,8 +30,7 @@ namespace Tim.Backend.Startup.Config
         /// <summary>
         /// Gets or sets Redis Password for connecting to redis.
         /// </summary>
-        [Required]
-        public string RedisPassword { get; set; } = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
+        public string RedisPassword { get; set; } = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? string.Empty;
 
         /// <summary>
         /// Ensures that all required values are populated.

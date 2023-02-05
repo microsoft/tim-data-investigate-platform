@@ -55,7 +55,8 @@ namespace Tim.Backend.Startup
             services.AddHttpClient();
             services.AddAppServices(Configuration, Environment);
             services.AddControllers()
-                .AddNewtonsoftJson(opts =>
+                .AddNewtonsoftJson(
+                opts =>
                 {
                     opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
                     opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
@@ -74,6 +75,8 @@ namespace Tim.Backend.Startup
 
             services.AddSwagger(Configuration);
             services.AddCouchBase(Configuration);
+            services.AddRedis(Configuration);
+            services.AddKusto(Configuration);
         }
 
         /// <summary>

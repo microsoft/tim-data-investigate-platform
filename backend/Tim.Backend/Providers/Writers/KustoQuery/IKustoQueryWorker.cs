@@ -8,8 +8,8 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
     using System.Threading.Tasks;
     using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Models;
+    using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Providers.Readers;
 
     /// <summary>
@@ -18,7 +18,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
     public interface IKustoQueryWorker
     {
 #pragma warning disable SA1600 // Elements should be documented
-        Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseRepository<QueryRunJsonEntity> dbRepository, KustoQueryClient kustoclient, string kustoTableName, CancellationToken cancellationToken);
+        Task<bool> RunQuery(string token, KustoQueryEventToProcess data, IKustoUserReader customReader, IDatabaseRepository<KustoQueryRun> dbRepository, KustoQueryClient kustoclient, string kustoTableName, CancellationToken cancellationToken);
 #pragma warning restore SA1600 // Elements should be documented
     }
 }

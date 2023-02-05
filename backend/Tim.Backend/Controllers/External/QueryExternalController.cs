@@ -17,14 +17,13 @@ namespace Tim.Backend.Controllers.External
     using Serilog;
     using StackExchange.Redis;
     using Tim.Backend.DataProviders.Clients;
+    using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Models.KustoQuery.Api;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.DbModels;
     using Tim.Backend.Providers.Helpers;
     using Tim.Backend.Providers.Readers;
     using Tim.Backend.Providers.Writers.KustoQuery;
     using Tim.Backend.Startup.Config;
-    using static Tim.Backend.Models.KustoQuery.KustoQueryRun;
 
     /// <summary>
     /// QueryExternalController saves and executes kusto queries.
@@ -39,7 +38,7 @@ namespace Tim.Backend.Controllers.External
         private readonly IKustoUserReader m_userReader;
         private readonly IKustoQueryWorker m_kustoQueryExecutor;
         private readonly IOptions<KustoConfiguration> m_kustoConfigs;
-        private readonly IDatabaseRepository<QueryRunJsonEntity> m_dbRepository;
+        private readonly IDatabaseRepository<KustoQueryRun> m_dbRepository;
         private readonly IConnectionMultiplexer m_redisConnection;
         private readonly ILogger m_logger;
 
@@ -64,7 +63,7 @@ namespace Tim.Backend.Controllers.External
             ITokenAcquisition tokenAcquisition,
             IKustoQueryWorker kustoQueryworker,
             IOptions<KustoConfiguration> kustoConfigs,
-            IDatabaseRepository<QueryRunJsonEntity> dbRepository,
+            IDatabaseRepository<KustoQueryRun> dbRepository,
             IConnectionMultiplexer connectionMultiplexer)
         {
             m_userReader = userKustoReader;
@@ -136,7 +135,7 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<KustoQueryRunActionResponse>> CheckQueryStatus(string queryRunId, CancellationToken cancellationToken)
         {
-            var queryRun = (await m_dbRepository.GetItem(queryRunId)).QueryRun;
+            var queryRun = await m_dbRepository.GetItemAsync(queryRunId);
 
             if (queryRun == null)
             {
@@ -183,12 +182,7 @@ namespace Tim.Backend.Controllers.External
                 if (queryRun.Status != QueryRunStates.TimedOut)
                 {
                     queryRun.Status = QueryRunStates.TimedOut;
-#pragma warning disable IDE0058 // Expression value is never used
-                    await m_dbRepository.AddOrUpdateItem(queryRun.QueryRunId.ToString(), new QueryRunJsonEntity
-                    {
-                        QueryRun = queryRun,
-                    });
-#pragma warning restore IDE0058 // Expression value is never used
+                    await m_dbRepository.AddOrUpdateItemAsync(queryRun.QueryRunId.ToString(), queryRun);
                 }
 
                 return Problem(title: $"Query timed out.", detail: "Query sent no response and timeout of 10 minutes was reached. ", statusCode: StatusCodes.Status400BadRequest);
