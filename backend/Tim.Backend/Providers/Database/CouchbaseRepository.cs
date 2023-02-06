@@ -48,9 +48,9 @@ namespace Tim.Backend.Providers.Database
         protected ILogger Logger { get; }
 
         /// <summary>
-        /// Add or update an item in the database.
+        /// Add or update a document in the database.
         /// </summary>
-        /// <param name="id">Unique identified of the object.</param>
+        /// <param name="id">Document id.</param>
         /// <param name="entity">Document contents.</param>
         /// <returns>Created db document or error.</returns>
         public async Task<TJsonEntity> AddOrUpdateItemAsync(string id, IJsonEntity entity)

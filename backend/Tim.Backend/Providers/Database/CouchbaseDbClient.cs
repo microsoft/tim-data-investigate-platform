@@ -82,7 +82,7 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <summary>
-        /// Test.
+        /// Initialize the database.
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         public async Task Initialize()
