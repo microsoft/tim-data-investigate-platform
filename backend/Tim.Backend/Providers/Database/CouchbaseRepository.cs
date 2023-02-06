@@ -65,7 +65,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "BucketName client failed with error: " + e.ToString());
+                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }
@@ -92,7 +92,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "BucketName client failed with error: " + e.ToString());
+                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }
@@ -114,7 +114,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "BucketName client failed with error: " + e.ToString());
+                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }
@@ -133,7 +133,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "BucketName client failed with error: " + e.ToString());
+                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }

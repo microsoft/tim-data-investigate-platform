@@ -23,7 +23,7 @@ namespace Tim.Backend.Providers.Helpers
         /// Populates all query specific metadata for non saved queries.
         /// </summary>
         /// <param name="queryRequest">Request that came into the api.</param>
-        /// <param name="dbRepository">BucketName client.</param>
+        /// <param name="dbRepository">Database repository.</param>
         /// <param name="ingestClient">Kusto Ingest client.</param>
         /// <param name="containerName">Name of the kusto query run collection.</param>
         /// <param name="cancellationToken">Cancellation token.</param>

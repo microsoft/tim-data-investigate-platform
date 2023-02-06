@@ -56,7 +56,7 @@ namespace Tim.Backend.Providers.Writers.KustoQuery
         /// <param name="token">User token.</param>
         /// <param name="data">Query to be executed specifics.</param>
         /// <param name="customReader">Class that hosts execute query.</param>
-        /// <param name="dbRepository">BucketName client.</param>
+        /// <param name="dbRepository">Database repository.</param>
         /// <param name="kustoClient">Kusto client for run query.</param>
         /// <param name="kustoTableName">Kusto table name to write results.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
