@@ -43,7 +43,7 @@ namespace Tim.Backend.DataProviders.Clients
         /// </summary>
         /// <param name="token">User bearer token.</param>
         /// <param name="clusterUrl">Cluster url the query will be run on top of.</param>
-        /// <param name="databaseName">BucketName the query will be run on top of.</param>
+        /// <param name="databaseName">Database the query will be run on top of.</param>
         /// <returns>Kusto Query Client ready to execute query.</returns>
         public static KustoQueryClient WithUserToken(string token, string clusterUrl, string databaseName)
         {
@@ -57,7 +57,7 @@ namespace Tim.Backend.DataProviders.Clients
         /// </summary>
         /// <typeparam name="T">Object that results will be parsed into.</typeparam>
         /// <param name="query">Query to be executes.</param>
-        /// <param name="databaseName">BucketName of where the query will be executed.</param>
+        /// <param name="databaseName">Database of where the query will be executed.</param>
         /// <param name="properties">Properties to run the query with, if not provided, use defaults.</param>
         /// <returns>Query Results.</returns>
         /// <exception cref="UnexpectedFrameException">Formatting error.</exception>
@@ -105,7 +105,7 @@ namespace Tim.Backend.DataProviders.Clients
         /// Executes query without result object defined.
         /// </summary>
         /// <param name="query">Query to be executed.</param>
-        /// <param name="databaseName">BucketName name where the query will be executed.</param>
+        /// <param name="databaseName">Database name where the query will be executed.</param>
         /// <param name="properties">Properties to run the query with, if not provided, use defaults.</param>
         /// <returns>Query results where each for is a dictionary of column name/value.</returns>
         /// <exception cref="UnexpectedFrameException">Fomratting error.</exception>
