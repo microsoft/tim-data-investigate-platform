@@ -14,7 +14,7 @@ namespace Tim.Backend.Providers.Database
     using Tim.Backend.Models;
 
     /// <summary>
-    /// Outlines the BucketName Client used byt the service.
+    /// Repository of operations for Couchbase.
     /// </summary>
     /// <typeparam name="TJsonEntity">Entity type.</typeparam>
     public class CouchbaseRepository<TJsonEntity> : IDatabaseRepository<TJsonEntity>
@@ -23,7 +23,7 @@ namespace Tim.Backend.Providers.Database
         /// <summary>
         /// Initializes a new instance of the <see cref="CouchbaseRepository{TJsonEntity}"/> class.
         /// </summary>
-        /// <param name="dbClient">Collection/table names.</param>
+        /// <param name="dbClient">Couchbase client.</param>
         public CouchbaseRepository(CouchbaseDbClient dbClient)
         {
             Logger = Log.Logger;
@@ -38,7 +38,7 @@ namespace Tim.Backend.Providers.Database
         public CouchbaseDbClient DatabaseClient { get; set; }
 
         /// <summary>
-        /// Gets or sets the Couchbase db client.
+        /// Gets or sets the Couchbase collection associated with <typeparamref name="TJsonEntity"/>.
         /// </summary>
         public Task<ICouchbaseCollection> Collection { get; set; }
 
@@ -51,8 +51,8 @@ namespace Tim.Backend.Providers.Database
         /// Add or update an item in the database.
         /// </summary>
         /// <param name="id">Unique identified of the object.</param>
-        /// <param name="entity">Object contents.</param>
-        /// <returns>Created db object or error.</returns>
+        /// <param name="entity">Document contents.</param>
+        /// <returns>Created db document or error.</returns>
         public async Task<TJsonEntity> AddOrUpdateItemAsync(string id, IJsonEntity entity)
         {
             try
@@ -71,10 +71,10 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <summary>
-        /// Gets an item from an existing collection based on id.
+        /// Gets a document from the collection with specified id.
         /// </summary>
-        /// <param name="id">Unique condition element is determined by.</param>
-        /// <returns>Item if found, null otherwise.</returns>
+        /// <param name="id">Document id.</param>
+        /// <returns>Document if found, null otherwise.</returns>
         public async Task<TJsonEntity> GetItemAsync(string id)
         {
             try
@@ -98,9 +98,9 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <summary>
-        /// Returns all item in a given collection.
+        /// Returns all documents for this collection.
         /// </summary>
-        /// <returns>List of items if any are present.</returns>
+        /// <returns>List of documents.</returns>
         public async Task<IEnumerable<TJsonEntity>> GetItemsAsync()
         {
             try
@@ -120,9 +120,9 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <summary>
-        /// Deletes items from a given collection.
+        /// Deletes document from this collection.
         /// </summary>
-        /// <param name="id">Unique identified for item to delete.</param>
+        /// <param name="id">Document id.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
         public async Task DeleteItemAsync(string id)
         {

@@ -83,7 +83,6 @@ namespace Tim.Backend.Providers.Database
                     UserName = Configs.DbUserName,
                     Password = Configs.DbUserPassword,
                     KvTimeout = TimeSpan.FromSeconds(10),
-                    /*Serializer = new DefaultSerializer(settings, settings),*/
                 });
             Logger.Information($"CouchbaseDbClient has been created.");
         }
