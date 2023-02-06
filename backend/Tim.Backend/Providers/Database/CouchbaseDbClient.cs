@@ -30,7 +30,6 @@ namespace Tim.Backend.Providers.Database
         {
             Logger = Log.Logger;
 
-            BucketName = dbConfigs.BucketName;
             Configs = dbConfigs;
         }
 
@@ -38,11 +37,6 @@ namespace Tim.Backend.Providers.Database
         /// Gets or sets the Couchbase db client.
         /// </summary>
         public ICluster CouchBaseClient { get; set; }
-
-        /// <summary>
-        /// Gets the Couchbase bucket client is connected to.
-        /// </summary>
-        public string BucketName { get; }
 
         /// <summary>
         /// Gets or sets the database configs.
@@ -75,7 +69,7 @@ namespace Tim.Backend.Providers.Database
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
         public async Task Connect()
         {
-            Logger.Information($"CouchbaseDbClient is starting up for bucket {Configs.BucketName}. ");
+            Logger.Information($"CouchbaseDbClient is connecting to database.");
             CouchBaseClient = await Cluster.ConnectAsync(
                 Configs.DatabaseConnection,
                 new ClusterOptions
@@ -99,7 +93,7 @@ namespace Tim.Backend.Providers.Database
             }
 
             await CouchBaseClient.WaitUntilReadyAsync(TimeSpan.FromMinutes(2));
-            Bucket = await CreateBucketIfNotExists(BucketName);
+            Bucket = await CreateBucketIfNotExists(Configs.BucketName);
             await CreateCollectionIfNotExists<KustoQueryRun>();
             await CreateCollectionIfNotExists<QueryTemplate>();
         }
@@ -157,7 +151,7 @@ namespace Tim.Backend.Providers.Database
             }
 
             await CouchBaseClient.QueryIndexes.CreatePrimaryIndexAsync(
-                BucketName,
+                Bucket.Name,
                 new CreatePrimaryQueryIndexOptions()
                     .ScopeName(scopeName)
                     .CollectionName(collectionName)

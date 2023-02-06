@@ -30,7 +30,7 @@ namespace Tim.Backend.Controllers.External
         /// <summary>
         /// Initializes a new instance of the <see cref="QueryTemplatesExternalController"/> class.
         /// </summary>
-        /// <param name="dbRepository">Database operator.</param>
+        /// <param name="dbRepository">Database repository.</param>
         public QueryTemplatesExternalController(
             IDatabaseRepository<QueryTemplate> dbRepository)
         {
