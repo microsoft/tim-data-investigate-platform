@@ -7,7 +7,7 @@ namespace Tim.Backend.Providers.Database
     using System.Threading.Tasks;
 
     /// <summary>
-    /// BucketName interface.
+    /// Database interface.
     /// </summary>
     public interface IDatabaseClient
     {
