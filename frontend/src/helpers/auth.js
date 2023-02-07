@@ -81,6 +81,7 @@ class AuthHandler {
         const authResult = await this.clientApplication.loginPopup({
           scopes: [`${import.meta.env.VITE_AUTH_CLIENT_ID}/.default`],
           redirectUri: import.meta.env.VITE_AUTH_REDIRECT,
+          prompt: 'select_account',
         });
         this.handleResponse(authResult);
       } else {
