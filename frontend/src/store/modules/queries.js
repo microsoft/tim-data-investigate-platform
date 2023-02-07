@@ -25,17 +25,12 @@ const actions = {
 
     return state.queryPromise;
   },
-  async loadQueries({ commit, dispatch, rootGetters }, reload = false) {
+  async loadQueries({ commit, dispatch }, reload = false) {
     const queries = await dispatch('getQueries', reload);
-    await dispatch('functions/loadFunctions', null, { root: true });
 
     const templates = queries
       .filter((query) => query.isDeleted !== true)
-      .map((query) => {
-        const functions = (query.functions ?? [])
-          .map((uuid) => rootGetters['functions/getFunctionByUuid'](uuid));
-        return new QueryTemplate({ ...query, functions });
-      });
+      .map((query) => new QueryTemplate({ ...query }));
 
     const queryOptions = {};
     await queryOptionStore.iterate((queryOption, uuid) => {
