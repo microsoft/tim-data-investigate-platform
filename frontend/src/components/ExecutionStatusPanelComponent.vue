@@ -18,12 +18,6 @@
 <script>
 export default {
   name: 'ExecutionStatusPanelComponent',
-  props: {
-    params: {
-      type: Object,
-      required: true,
-    },
-  },
   computed: {
     executionTime() {
       return this.params.context.componentParent.executionTime;
