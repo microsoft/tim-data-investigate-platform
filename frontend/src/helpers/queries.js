@@ -26,14 +26,38 @@ export const runKustoQueryPoll = async (
   let retries = 0;
   let backOffTime = startBackOff;
 
-  const queryRun = await executeQuery(
-    formatCluster(cluster),
-    database,
-    query,
-    additionalParameters,
-  );
+  let queryRunId;
 
-  const { queryRunId } = queryRun.data;
+  try {
+    // eslint-disable-next-line no-await-in-loop
+    const result = await executeQuery(
+      formatCluster(cluster),
+      database,
+      query,
+      additionalParameters,
+    );
+
+    // Return if we got an immediate result
+    if (result.status === 200) {
+      return {
+        queryInfo: result.data?.executionMetrics,
+        data: result.data?.resultData || [],
+      };
+    }
+
+    if (result.status === 202) {
+      queryRunId = result.data?.queryRunId;
+    }
+  } catch (err) {
+    if (err?.response?.status === 400) {
+      throw err?.response?.data?.detail;
+    }
+    throw err;
+  }
+
+  if (queryRunId === null) {
+    throw Error('queryRunId missing from response.');
+  }
 
   // TODO: improve this using yield return instead
   while (Date.now() - startTimer < maxPollTimeout) {
@@ -46,8 +70,8 @@ export const runKustoQueryPoll = async (
 
       if (result.status === 200) {
         return {
-          queryInfo: JSON.parse(result.data.executionMetrics),
-          data: result.data?.results || [],
+          queryInfo: result.data.executionMetrics,
+          data: result.data?.resultData || [],
         };
       }
     } catch (err) {

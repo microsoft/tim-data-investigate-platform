@@ -1,8 +1,8 @@
-﻿// <copyright file="KustoQueryExecuteRequest.cs" company="Microsoft">
+﻿// <copyright file="KustoQuery.cs" company="Microsoft">
 //   Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
-namespace Tim.Backend.Models.KustoQuery.Api
+namespace Tim.Backend.Models.KustoQuery
 {
     using System;
 
@@ -12,7 +12,7 @@ namespace Tim.Backend.Models.KustoQuery.Api
     /// Request to execute kusto query.
     /// </summary>
     [JsonObject]
-    public sealed class KustoQueryExecuteRequest
+    public sealed class KustoQuery
     {
         /// <summary>
         /// Gets or sets the authenticated user making the request.

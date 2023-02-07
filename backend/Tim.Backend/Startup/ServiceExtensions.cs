@@ -8,7 +8,6 @@ namespace Tim.Backend.Startup
     using System.Collections.Generic;
     using System.IO;
     using System.Reflection;
-    using System.Text;
     using System.Threading.Tasks;
     using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
@@ -18,6 +17,7 @@ namespace Tim.Backend.Startup
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Identity.Client;
     using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
     using Serilog;
@@ -26,8 +26,6 @@ namespace Tim.Backend.Startup
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Models.Templates;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.Readers;
-    using Tim.Backend.Providers.Writers.KustoQuery;
     using Tim.Backend.Startup;
     using Tim.Backend.Startup.Config;
     using Tim.Common;
@@ -146,14 +144,30 @@ namespace Tim.Backend.Startup
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
+                    options.Audience = authConfigs.ClientId;
+                    options.Authority = $"https://login.microsoftonline.com/{authConfigs.ClientAuthority}";
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfigs.SigningKey)),
+                        /*IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfigs.SigningKey))*/
+                        ValidIssuer = "https://login.microsoftonline.com/{authConfigs.ClientAuthority}",
+                        ValidAudience = $"api://{authConfigs.ClientId}",
+                        RequireExpirationTime = true,
+                        ValidateLifetime = true,
+                        RequireSignedTokens = true,
                     };
+                    options.SaveToken = true;
                 });
+
+            services.AddSingleton(p =>
+            {
+                return ConfidentialClientApplicationBuilder.Create(authConfigs.ClientId)
+                    .WithAuthority($"https://login.microsoftonline.com/{authConfigs.ClientAuthority}")
+                    .WithClientSecret(authConfigs.ClientSecret)
+                    .Build();
+            });
 
             services.AddPolicyRegistry();
 
@@ -251,25 +265,6 @@ namespace Tim.Backend.Startup
 
                 return new KustoIngestClient(connectionString);
             });
-
-            services.AddSingleton(p =>
-            {
-                var connectionString = new KustoConnectionStringBuilder
-                {
-                    DataSource = kustoConfigs.KustoClusterUri,
-                    InitialCatalog = kustoConfigs.KustoDatabase,
-                    FederatedSecurity = true,
-                    ApplicationClientId = kustoConfigs.KustoAppId,
-                    ApplicationKey = kustoConfigs.KustoAppKey,
-                    ApplicationNameForTracing = "TIM-Query-To-Kusto",
-                };
-
-                return new KustoQueryClient(connectionString);
-            });
-
-            services.AddSingleton<IKustoQueryWorker, RunKustoQueryWorker>();
-
-            services.AddScoped<IKustoUserReader, KustoUserReader>();
         }
 
         /// <summary>

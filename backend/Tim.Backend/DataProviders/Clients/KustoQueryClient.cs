@@ -8,6 +8,7 @@ namespace Tim.Backend.DataProviders.Clients
     using System.Collections.Generic;
     using System.Data;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Kusto.Data;
@@ -16,13 +17,15 @@ namespace Tim.Backend.DataProviders.Clients
     using Kusto.Data.Results;
     using Newtonsoft.Json;
     using Serilog;
+    using Tim.Backend.Models.KustoQuery;
+    using Tim.Backend.Providers.Query;
 
     /// <summary>
     /// Kusto Query client is used to query kusto tables.
     /// </summary>
-    public class KustoQueryClient
+    public class KustoQueryClient : IKustoQueryClient
     {
-        private readonly ICslQueryProvider m_client;
+        private readonly IKustoStatelessClient m_client;
         private readonly ILogger m_logger;
 
         /// <summary>
@@ -34,7 +37,7 @@ namespace Tim.Backend.DataProviders.Clients
             m_logger = Log.Logger;
             var type = !string.IsNullOrEmpty(connectionStringBuilder.UserToken) ? "user" : "service";
             m_logger.Information($"Initializing KustoQueryClient for cluster: {connectionStringBuilder.DataSource} database: {connectionStringBuilder.InitialCatalog} Client type: {type}.");
-            m_client = KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
+            m_client = KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder) as IKustoStatelessClient;
             m_logger.Information("Done initializing KustoQueryClient.");
         }
 
@@ -57,17 +60,16 @@ namespace Tim.Backend.DataProviders.Clients
         /// </summary>
         /// <typeparam name="T">Object that results will be parsed into.</typeparam>
         /// <param name="query">Query to be executes.</param>
-        /// <param name="databaseName">Database of where the query will be executed.</param>
         /// <param name="properties">Properties to run the query with, if not provided, use defaults.</param>
         /// <returns>Query Results.</returns>
         /// <exception cref="UnexpectedFrameException">Formatting error.</exception>
-        public async Task<KustoQueryResults<T>> ReadAsync<T>(string query, string databaseName, ClientRequestProperties properties = null)
+        public async Task<KustoQueryResults<T>> ReadAsync<T>(KustoQuery query, ClientRequestProperties properties = null)
             where T : class, new()
         {
             var queryResults = new List<T>();
-            var queryStats = new KustoQueryStats();
+            KustoQueryStats queryStats = null;
 
-            using var frames = await ExecuteQueryAsync(query, databaseName, properties);
+            using var frames = await ExecuteQueryAsync(query, properties);
 
             while (frames.MoveNext())
             {
@@ -81,9 +83,9 @@ namespace Tim.Backend.DataProviders.Clients
                 {
                     var frameResults = HandleDataTable<T>(frame as ProgressiveDataSetDataTableFrame);
                     queryResults.AddRange(frameResults.QueryResults);
-                    if (frameResults.Stats != null)
+                    if (frameResults.QueryStats != null)
                     {
-                        queryStats = frameResults.Stats;
+                        queryStats = frameResults.QueryStats;
                     }
                 }
                 else if (frame.FrameType == FrameType.DataSetCompletion)
@@ -101,19 +103,13 @@ namespace Tim.Backend.DataProviders.Clients
             return new KustoQueryResults<T>(queryResults, queryStats);
         }
 
-        /// <summary>
-        /// Executes query without result object defined.
-        /// </summary>
-        /// <param name="query">Query to be executed.</param>
-        /// <param name="databaseName">Database name where the query will be executed.</param>
-        /// <param name="properties">Properties to run the query with, if not provided, use defaults.</param>
-        /// <returns>Query results where each for is a dictionary of column name/value.</returns>
-        /// <exception cref="UnexpectedFrameException">Fomratting error.</exception>
-        public async Task<KustoQueryResults<IDictionary<string, object>>> ReadUntypedAsync(string query, string databaseName, ClientRequestProperties properties = null)
+        /// <inheritdoc/>
+        public async Task<KustoQueryResults<IDictionary<string, object>>> RunQuery(KustoQuery query, CancellationToken cancellationToken)
         {
-            var frames = await ExecuteQueryAsync(query, databaseName, properties);
+            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.Query, null, cancellationToken);
             var queryResults = new List<IDictionary<string, object>>();
-            var queryStats = new KustoQueryStats();
+            KustoQueryStats queryStats = null;
+            var frames = dataSet.GetFrames();
 
             while (frames.MoveNext())
             {
@@ -127,9 +123,9 @@ namespace Tim.Backend.DataProviders.Clients
                 {
                     var frameResults = HandleDataTableUntyped(frame as ProgressiveDataSetDataTableFrame);
                     queryResults.AddRange(frameResults.QueryResults);
-                    if (frameResults.Stats != null)
+                    if (frameResults.QueryStats != null)
                     {
-                        queryStats = frameResults.Stats;
+                        queryStats = frameResults.QueryStats;
                     }
                 }
                 else if (frame.FrameType == FrameType.DataSetCompletion)
@@ -139,7 +135,7 @@ namespace Tim.Backend.DataProviders.Clients
                 else
                 {
                     var ex = new UnexpectedFrameException($"Received unexpected frame type `{frame.FrameType}`.");
-                    m_logger.Error(ex, "Failed to perform operation {operation} with exception: {exception}", "KustoQueryClient-ReadAsync", ex);
+                    m_logger.Error(ex, "Failed to perform operation {operation} with exception: {exception}", "KustoQueryClient-RunQuery", ex);
                     throw ex;
                 }
             }
@@ -147,7 +143,7 @@ namespace Tim.Backend.DataProviders.Clients
             return new KustoQueryResults<IDictionary<string, object>>(queryResults, queryStats);
         }
 
-        private async Task<IEnumerator<ProgressiveDataSetFrame>> ExecuteQueryAsync(string query, string databaseName, ClientRequestProperties properties = null)
+        private async Task<IEnumerator<ProgressiveDataSetFrame>> ExecuteQueryAsync(KustoQuery query, ClientRequestProperties properties = null)
         {
             ClientRequestProperties clientRequestProperties;
             if (properties == null)
@@ -165,7 +161,7 @@ namespace Tim.Backend.DataProviders.Clients
             }
 
             m_logger.Information($"Executing query using Kusto's ExecuteQueryV2Async. Client Request Id: {clientRequestProperties.ClientRequestId} ", "KustoQueryClient-ExecuteQueryAsync");
-            var dataSet = await m_client.ExecuteQueryV2Async(databaseName, query, clientRequestProperties);
+            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.Query, clientRequestProperties);
             m_logger.Information($"Query completed. Client Request Id: {clientRequestProperties.ClientRequestId} ", "KustoQueryClient-ExecuteQueryAsync");
             return dataSet.GetFrames();
         }

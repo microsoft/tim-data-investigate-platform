@@ -63,10 +63,7 @@ namespace Tim.Backend.Providers.Database
             return typeof(T).Name;
         }
 
-        /// <summary>
-        /// Create a connection to the database.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task Connect()
         {
             Logger.Information($"CouchbaseDbClient is connecting to database.");
@@ -81,10 +78,7 @@ namespace Tim.Backend.Providers.Database
             Logger.Information($"CouchbaseDbClient has been created.");
         }
 
-        /// <summary>
-        /// Initialize the database.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task Initialize()
         {
             if (CouchBaseClient is null)

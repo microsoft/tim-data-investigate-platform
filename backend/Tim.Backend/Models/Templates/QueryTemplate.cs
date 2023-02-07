@@ -30,6 +30,9 @@ namespace Tim.Backend.Models.Templates
     /// </summary>
     public class QueryTemplate : IValidatableObject, IJsonEntity
     {
+        /// <inheritdoc/>
+        public string Id => Uuid.ToString();
+
         /// <summary>
         /// Gets or sets the uuid for a given query template.
         /// </summary>

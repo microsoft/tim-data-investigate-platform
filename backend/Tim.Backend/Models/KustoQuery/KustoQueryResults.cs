@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
-namespace Tim.Backend.DataProviders.Clients
+namespace Tim.Backend.Models.KustoQuery
 {
     using System.Collections.Generic;
 
@@ -16,11 +16,11 @@ namespace Tim.Backend.DataProviders.Clients
         /// Initializes a new instance of the <see cref="KustoQueryResults{T}"/> class.
         /// </summary>
         /// <param name="queryResults">List of results.</param>
-        /// <param name="stats">Query stats.</param>
-        public KustoQueryResults(IEnumerable<T> queryResults, KustoQueryStats stats)
+        /// <param name="queryStats">Query stats.</param>
+        public KustoQueryResults(IEnumerable<T> queryResults, KustoQueryStats queryStats)
         {
             QueryResults = queryResults;
-            Stats = stats;
+            QueryStats = queryStats;
         }
 
         /// <summary>
@@ -31,6 +31,6 @@ namespace Tim.Backend.DataProviders.Clients
         /// <summary>
         /// Gets or sets query stats.
         /// </summary>
-        public KustoQueryStats Stats { get; set; }
+        public KustoQueryStats QueryStats { get; set; }
     }
 }

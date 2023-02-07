@@ -89,7 +89,7 @@ namespace Tim.Backend.Controllers.External
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] QueryTemplate template)
         {
-            if (await m_dbRepository.GetItemAsync(template.Uuid.ToString()) != null)
+            if (await m_dbRepository.GetItemAsync(template.Id) != null)
             {
                 return BadRequest("A template with this UUID already exists");
             }
@@ -98,7 +98,7 @@ namespace Tim.Backend.Controllers.External
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
 
-            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
+            await m_dbRepository.AddOrUpdateItemAsync(template);
 
             return Ok();
         }
@@ -122,7 +122,7 @@ namespace Tim.Backend.Controllers.External
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
 
-            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
+            await m_dbRepository.AddOrUpdateItemAsync(template);
 
             return Ok();
         }
@@ -160,7 +160,7 @@ namespace Tim.Backend.Controllers.External
             template.UpdatedBy = User.Identity.Name;
             template.Updated = DateTime.UtcNow;
 
-            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
+            await m_dbRepository.AddOrUpdateItemAsync(template);
 
             return NoContent();
         }
@@ -180,7 +180,7 @@ namespace Tim.Backend.Controllers.External
             template.Updated = DateTime.UtcNow;
             template.IsDeleted = true;
 
-            await m_dbRepository.AddOrUpdateItemAsync(template.Uuid.ToString(), template);
+            await m_dbRepository.AddOrUpdateItemAsync(template);
 
             return NoContent();
         }

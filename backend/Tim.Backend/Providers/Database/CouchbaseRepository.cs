@@ -47,21 +47,20 @@ namespace Tim.Backend.Providers.Database
         /// </summary>
         protected ILogger Logger { get; }
 
-        /// <summary>
-        /// Add or update a document in the database.
-        /// </summary>
-        /// <param name="id">Document id.</param>
-        /// <param name="entity">Document contents.</param>
-        /// <returns>Created db document or error.</returns>
-        public async Task<TJsonEntity> AddOrUpdateItemAsync(string id, IJsonEntity entity)
+        /// <inheritdoc/>
+        public async Task AddOrUpdateItemAsync(IJsonEntity entity, TimeSpan? timeToLive = null)
         {
+            var upsertOptions = new UpsertOptions();
+
+            if (timeToLive != null)
+            {
+                upsertOptions.Expiry(timeToLive.Value);
+            }
+
             try
             {
                 var collection = await Collection;
-                var upsertResult = await collection.UpsertAsync(id, entity);
-                var getResult = await collection.GetAsync(id);
-
-                return getResult.ContentAs<TJsonEntity>();
+                var upsertResult = await collection.UpsertAsync(entity.Id, entity, upsertOptions);
             }
             catch (Exception e)
             {
@@ -70,11 +69,7 @@ namespace Tim.Backend.Providers.Database
             }
         }
 
-        /// <summary>
-        /// Gets a document from the collection with specified id.
-        /// </summary>
-        /// <param name="id">Document id.</param>
-        /// <returns>Document if found, null otherwise.</returns>
+        /// <inheritdoc/>
         public async Task<TJsonEntity> GetItemAsync(string id)
         {
             try
@@ -97,10 +92,7 @@ namespace Tim.Backend.Providers.Database
             }
         }
 
-        /// <summary>
-        /// Returns all documents for this collection.
-        /// </summary>
-        /// <returns>List of documents.</returns>
+        /// <inheritdoc/>
         public async Task<IEnumerable<TJsonEntity>> GetItemsAsync()
         {
             try
@@ -119,11 +111,7 @@ namespace Tim.Backend.Providers.Database
             }
         }
 
-        /// <summary>
-        /// Deletes document from this collection.
-        /// </summary>
-        /// <param name="id">Document id.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        /// <inheritdoc/>
         public async Task DeleteItemAsync(string id)
         {
             try

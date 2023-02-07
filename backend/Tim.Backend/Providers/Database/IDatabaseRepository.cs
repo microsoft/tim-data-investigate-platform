@@ -4,6 +4,7 @@
 
 namespace Tim.Backend.Providers.Database
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Tim.Backend.Models;
@@ -18,10 +19,10 @@ namespace Tim.Backend.Providers.Database
         /// <summary>
         /// Add or update object in the database.
         /// </summary>
-        /// <param name="id">Identifier for object.</param>
         /// <param name="entity">Object contents.</param>
-        /// <returns>Created db object or error.</returns>
-        public Task<TJsonEntity> AddOrUpdateItemAsync(string id, IJsonEntity entity);
+        /// <param name="timeToLive">Object time to live.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public Task AddOrUpdateItemAsync(IJsonEntity entity, TimeSpan? timeToLive = null);
 
         /// <summary>
         /// Gets an object with the specified id.
