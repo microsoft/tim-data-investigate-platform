@@ -22,12 +22,6 @@ namespace Tim.Backend.Startup.Config
         }
 
         /// <summary>
-        /// Gets or sets the kusto query url for the main service cluster.
-        /// </summary>
-        [Required]
-        public string KustoClusterUri { get; set; } = Environment.GetEnvironmentVariable("KUSTO_URL");
-
-        /// <summary>
         /// Gets or sets the kusto query ingest url for the main service cluster.
         /// </summary>
         [Required]
@@ -49,18 +43,6 @@ namespace Tim.Backend.Startup.Config
         /// Gets or sets the kusto database for the main service cluster.
         /// </summary>
         public string KustoDatabase { get; set; } = Environment.GetEnvironmentVariable("KUSTO_DATABASE_NAME") ?? "Research";
-
-        /// <summary>
-        /// Gets or sets the query template table name.
-        /// </summary>
-        [Required]
-        public string QueryTemplatesTableName { get; set; } = Environment.GetEnvironmentVariable("QUERY_TEMPLATE_TABLE_NAME") ?? "QueryTemplate";
-
-        /// <summary>
-        /// Gets or sets the Saved query run table name.
-        /// </summary>
-        [Required]
-        public string QueryRunsTableName { get; set; } = Environment.GetEnvironmentVariable("QUERY_RUN_TABLE_NAME") ?? "QueryRun";
 
         /// <summary>
         /// Ensures that all required values are populated.
