@@ -11,12 +11,6 @@ defaults:
   run:
     working-directory: frontend
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  IMAGE_PULL_SECRET_NAME: githubdocker
-  IMAGE_TAG: ${{ github.sha }}
-
 jobs:
   eslint:
     runs-on: ubuntu-latest
