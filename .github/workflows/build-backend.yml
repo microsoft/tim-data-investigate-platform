@@ -11,18 +11,30 @@ defaults:
   run:
     working-directory: backend
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  IMAGE_PULL_SECRET_NAME: githubdocker
-  IMAGE_TAG: ${{ github.sha }}
-
 jobs:
-  build-and-deploy:
+  unit-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test
+
+  docker-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v3
@@ -34,90 +46,77 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
-          tags: |
-            type=sha
-            type=raw,value=${{ env.IMAGE_TAG }}
-            type=ref,event=pr
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
           context: ./backend
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
 
-  deploy-helm:
-    runs-on: ubuntu-latest
-    needs: [build-and-deploy]
-    steps:
-      - uses: actions/checkout@v3
+  # deploy-helm:
+  #   runs-on: ubuntu-latest
+  #   needs: [build-and-deploy]
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.4.0
+  #     - name: Create k8s Kind Cluster
+  #       uses: helm/kind-action@v1.4.0
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: v3.10.0
+  #     - name: Set up Helm
+  #       uses: azure/setup-helm@v3
+  #       with:
+  #         version: v3.10.0
 
-      - name: Install backend helm dependencies
-        run: |
-          helm dep update
-        working-directory: ./backend/helm
+  #     - name: Install backend helm dependencies
+  #       run: |
+  #         helm dep update
+  #       working-directory: ./backend/helm
 
-      - name: Install github docker secret
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          kubectl create secret docker-registry $IMAGE_PULL_SECRET_NAME \
-            --docker-server="$REGISTRY" \
-            --docker-username="$IMAGE_NAME" \
-            --docker-password="$GITHUB_TOKEN" \
-            --docker-email="" \
-            --namespace="default"
+  #     - name: Install github docker secret
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         kubectl create secret docker-registry $IMAGE_PULL_SECRET_NAME \
+  #           --docker-server="$REGISTRY" \
+  #           --docker-username="$IMAGE_NAME" \
+  #           --docker-password="$GITHUB_TOKEN" \
+  #           --docker-email="" \
+  #           --namespace="default"
 
-      - name: Deploy helm chart
-        env:
-          REDIS_HOSTS: '${{ vars.REDIS_HOSTS }}'
-          REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
-          DB_CONNECT_STRING: '${{ vars.DB_CONNECT_STRING }}'
-          KUSTO_APP_KEY: '${{ secrets.KUSTO_APP_KEY }}'
-          KUSTO_URL: '${{ vars.KUSTO_URL }}'
-          KUSTO_INGEST_URL: '${{ vars.KUSTO_INGEST_URL }}'
-          KUSTO_CLIENT_APP_ID: '${{ secrets.KUSTO_CLIENT_APP_ID }}'
-          SIGNING_KEY: '${{ secrets.SIGNING_KEY }}'
-          AUTH_USERNAME: '${{ vars.AUTH_USERNAME }}'
-          AUTH_PASSWORD: '${{ secrets.AUTH_PASSWORD }}'
-        run: |
-          helm upgrade tim . --install \
-            --set params.redis_hosts="$REDIS_HOSTS" \
-            --set params.redis_password="$REDIS_PASSWORD" \
-            --set params.db_connect_string="$DB_CONNECT_STRING" \
-            --set params.kusto_app_key="$KUSTO_APP_KEY" \
-            --set params.kusto_url="$KUSTO_URL" \
-            --set params.kusto_ingest_url="$KUSTO_INGEST_URL" \
-            --set params.kusto_client_id="$KUSTO_CLIENT_APP_ID" \
-            --set params.signing_key="$SIGNING_KEY" \
-            --set params.auth_username="$AUTH_USERNAME" \
-            --set params.auth_password="$AUTH_PASSWORD" \
-            --set versionTag="$IMAGE_TAG" \
-            --set image.pullSecrets[0].name="$IMAGE_PULL_SECRET_NAME" \
-            --namespace default \
-            --wait --timeout 300s
-        working-directory: ./backend/helm
+  #     - name: Deploy helm chart
+  #       env:
+  #         REDIS_HOSTS: '${{ secrets.REDIS_HOSTS }}'
+  #         REDIS_PASSWORD: '${{ secrets.REDIS_PASSWORD }}'
+  #         DB_CONNECT_STRING: '${{ secrets.DB_CONNECT_STRING }}'
+  #         KUSTO_APP_KEY: '${{ secrets.KUSTO_APP_KEY }}'
+  #         KUSTO_URL: '${{ secrets.KUSTO_URL }}'
+  #         KUSTO_INGEST_URL: '${{ secrets.KUSTO_INGEST_URL }}'
+  #         KUSTO_CLIENT_APP_ID: '${{ secrets.KUSTO_CLIENT_APP_ID }}'
+  #         SIGNING_KEY: '${{ secrets.SIGNING_KEY }}'
+  #         AUTH_USERNAME: '${{ secrets.AUTH_USERNAME }}'
+  #         AUTH_PASSWORD: '${{ secrets.AUTH_PASSWORD }}'
+  #       run: |
+  #         helm upgrade tim . --install \
+  #           --set params.redis_hosts="$REDIS_HOSTS" \
+  #           --set params.redis_password="$REDIS_PASSWORD" \
+  #           --set params.db_connect_string="$DB_CONNECT_STRING" \
+  #           --set params.kusto_app_key="$KUSTO_APP_KEY" \
+  #           --set params.kusto_url="$KUSTO_URL" \
+  #           --set params.kusto_ingest_url="$KUSTO_INGEST_URL" \
+  #           --set params.kusto_client_id="$KUSTO_CLIENT_APP_ID" \
+  #           --set params.signing_key="$SIGNING_KEY" \
+  #           --set params.auth_username="$AUTH_USERNAME" \
+  #           --set params.auth_password="$AUTH_PASSWORD" \
+  #           --set versionTag="$IMAGE_TAG" \
+  #           --set image.pullSecrets[0].name="$IMAGE_PULL_SECRET_NAME" \
+  #           --namespace default \
+  #           --wait --timeout 300s
+  #       working-directory: ./backend/helm
 
-      - name: Debug failure
-        if: failure()
-        run: |
-          kubectl get deployment -A
-          kubectl get services -A
-          kubectl get ingress -A
-          kubectl describe deployment tim-backend
-          kubectl describe pod
-          kubectl logs deployment/tim-backend
+  #     - name: Debug failure
+  #       if: failure()
+  #       run: |
+  #         kubectl get deployment -A
+  #         kubectl get services -A
+  #         kubectl get ingress -A
+  #         kubectl describe deployment tim-backend
+  #         kubectl describe pod
+  #         kubectl logs deployment/tim-backend
