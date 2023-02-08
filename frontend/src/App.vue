@@ -226,7 +226,7 @@ export default {
           d.elStartX = d.el.getBoundingClientRect().left;
           d.elStartY = d.el.getBoundingClientRect().top;
           d.el.style.position = 'fixed';
-          d.el.style.margin = 0;
+          d.el.style.margin = '0';
           d.oldTransition = d.el.style.transition;
           d.el.style.transition = 'none';
         }
