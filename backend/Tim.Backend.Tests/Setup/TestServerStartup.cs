@@ -7,8 +7,6 @@ namespace Tim.Backend.Tests.Setup
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Tim.Backend.Providers.Readers;
-    using Tim.Backend.Startup;
     using Tim.Backend.Startup.Config;
     using Tim.Common;
 
@@ -17,8 +15,11 @@ namespace Tim.Backend.Tests.Setup
     /// </summary>
     public class TestServerStartup
     {
-        private const string AzureADSectionName = "AzureAd";
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TestServerStartup"/> class.
+        /// </summary>
+        /// <param name="configuration">DI configuration.</param>
+        /// <param name="environment">DI environment.</param>
         public TestServerStartup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Environment = environment;
@@ -45,13 +46,7 @@ namespace Tim.Backend.Tests.Setup
             // Bind the configuration using IOptions to your concrete settings class
             services.Configure<KustoConfiguration>(Configuration.GetSection(nameof(KustoConfiguration)));
 
-            services.AddScoped<IKustoUserReader, KustoUserReader>();
-
             services.AddSingleton<ISharedCache, InMemoryCache>();
-        }
-
-        public void Configure()
-        {
         }
     }
 }
