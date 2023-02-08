@@ -25,9 +25,6 @@ jobs:
         with:
           dotnet-version: 6.0
 
-      - name: Build
-        run: dotnet build -c Release --no-restore
-
       - name: Run unit tests
         run: dotnet test
 
