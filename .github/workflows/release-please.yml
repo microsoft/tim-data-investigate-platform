@@ -59,6 +59,24 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Extract metadata for Docker
+        id: meta2
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend-enterprise
+          tags: |
+            type=ref,event=tag
+            type=sha
+
+      - name: Build and push Docker image (enterprise)
+        uses: docker/build-push-action@v3
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta2.outputs.tags }}
+          labels: ${{ steps.meta2.outputs.labels }}
+          build-args: enterprise
+
   build-backend:
     runs-on: ubuntu-latest
     needs: release-please
