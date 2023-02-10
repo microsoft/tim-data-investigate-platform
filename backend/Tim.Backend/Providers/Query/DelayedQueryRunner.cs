@@ -4,10 +4,10 @@
 
 namespace Tim.Backend.Providers.Query
 {
-    using Serilog;
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using Serilog;
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Providers.Database;
 
