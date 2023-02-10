@@ -62,12 +62,13 @@ namespace Tim.Backend.Providers.Database
         /// <typeparam name="T">Entity type.</typeparam>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         public static string GetCollectionName<T>()
+            where T : IJsonEntity
         {
             return typeof(T).Name;
         }
 
         /// <inheritdoc/>
-        public async Task Connect()
+        public async Task ConnectAsync()
         {
             Logger.Information($"CouchbaseDbClient is connecting to database.");
             CouchBaseClient = await Cluster.ConnectAsync(
@@ -82,7 +83,7 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <inheritdoc/>
-        public async Task Initialize()
+        public async Task InitializeAsync()
         {
             if (CouchBaseClient is null)
             {
@@ -123,6 +124,7 @@ namespace Tim.Backend.Providers.Database
         }
 
         private async Task CreateCollectionIfNotExists<T>()
+            where T : IJsonEntity
         {
             if (Bucket is null)
             {

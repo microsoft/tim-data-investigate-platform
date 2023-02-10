@@ -9,8 +9,6 @@ namespace Tim.Backend.Startup
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
     using Prometheus;
     using Tim.Backend.Startup.Config;
 
@@ -55,12 +53,7 @@ namespace Tim.Backend.Startup
             services.AddHttpClient();
             services.AddAppServices(Configuration, Environment);
             services.AddControllers()
-                .AddNewtonsoftJson(
-                opts =>
-                {
-                    opts.SerializerSettings.Converters.Add(new StringEnumConverter(new CamelCaseNamingStrategy()));
-                    opts.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
-                });
+                .AddNewtonsoftJson();
             services.AddCors(options =>
                 {
                     options.AddPolicy(

@@ -6,6 +6,7 @@ namespace Tim.Backend.Models.Templates
 {
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Defines query field params.
@@ -16,16 +17,19 @@ namespace Tim.Backend.Models.Templates
         /// Gets or sets query field type.
         /// </summary>
         [Required]
+        [JsonProperty("type")]
         public string Type { get; set; }
 
         /// <summary>
         /// Gets or sets query field origin.
         /// </summary>
+        [JsonProperty("from")]
         public string From { get; set; }
 
         /// <summary>
         /// Gets or sets query field regex.
         /// </summary>
+        [JsonProperty("regex")]
         public string Regex { get; set; }
 
         /// <summary>

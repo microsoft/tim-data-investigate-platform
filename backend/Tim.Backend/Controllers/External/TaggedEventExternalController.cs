@@ -4,16 +4,15 @@
 
 namespace Tim.Backend.Controllers.External
 {
-    using System;
     using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
-
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
-    using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Models.TaggedEvents;
+    using Tim.Backend.Models.TaggedEvents.Tables;
+    using Tim.Backend.Providers.Kusto;
 
     /// <summary>
     /// TaggedEventExternalControlle manages tagged event data.
@@ -24,15 +23,27 @@ namespace Tim.Backend.Controllers.External
     public class TaggedEventExternalController : Controller
     {
         private readonly KustoIngestClient m_ingestClient;
+        private readonly IKustoTable m_savedEventTable;
+        private readonly IKustoTable m_eventTagTable;
+        private readonly IKustoTable m_eventCommentTable;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TaggedEventExternalController"/> class.
         /// </summary>
         /// <param name="kustoClient">Kusto ingest client.</param>
+        /// <param name="savedEventTable">Table spec for saved events.</param>
+        /// <param name="eventTagTable">Table spec for event tags.</param>
+        /// <param name="eventCommentTable">Table spec for event comments.</param>
         public TaggedEventExternalController(
-            KustoIngestClient kustoClient)
+            KustoIngestClient kustoClient,
+            SavedEventTable savedEventTable,
+            EventTagTable eventTagTable,
+            EventCommentTable eventCommentTable)
         {
             m_ingestClient = kustoClient;
+            m_savedEventTable = savedEventTable;
+            m_eventTagTable = eventTagTable;
+            m_eventCommentTable = eventCommentTable;
         }
 
         /// <summary>
@@ -44,11 +55,11 @@ namespace Tim.Backend.Controllers.External
         [HttpPost("savedEvents")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<CreationResultResponse>>> CreateSavedEvent(
-            [FromBody] IEnumerable<SavedEventRequest> requestArray,
+        public async Task<ActionResult> CreateSavedEvent(
+            [FromBody] IEnumerable<SavedEvent> requestArray,
             CancellationToken cancellationToken)
         {
-            return await EventCreation<SavedEvent>(requestArray, "SavedEvent", cancellationToken);
+            return await EventCreation(requestArray, m_savedEventTable, cancellationToken);
         }
 
         /// <summary>
@@ -60,11 +71,11 @@ namespace Tim.Backend.Controllers.External
         [HttpPost("tags")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<CreationResultResponse>>> CreateEventTag(
-            [FromBody] IEnumerable<EventTagRequest> requestArray,
+        public async Task<ActionResult> CreateEventTag(
+            [FromBody] IEnumerable<EventTag> requestArray,
             CancellationToken cancellationToken)
         {
-            return await EventCreation<EventTag>(requestArray, "EventTag", cancellationToken);
+            return await EventCreation(requestArray, m_eventTagTable, cancellationToken);
         }
 
         /// <summary>
@@ -76,14 +87,14 @@ namespace Tim.Backend.Controllers.External
         [HttpPost("comments")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IEnumerable<CreationResultResponse>>> CreateEventComment(
-            [FromBody] IEnumerable<EventCommentRequest> requestArray,
+        public async Task<ActionResult> CreateEventComment(
+            [FromBody] IEnumerable<EventComment> requestArray,
             CancellationToken cancellationToken)
         {
-            return await EventCreation<EventComment>(requestArray, "EvenComment", cancellationToken);
+            return await EventCreation(requestArray, m_eventCommentTable, cancellationToken);
         }
 
-        private async Task<ActionResult<IEnumerable<CreationResultResponse>>> EventCreation<T>(IEnumerable<IEventRequest> requestArray, string table, CancellationToken cancellationToken)
+        private async Task<ActionResult> EventCreation(IEnumerable<IKustoEvent> requestArray, IKustoTable kustoTable, CancellationToken cancellationToken)
         {
             if (requestArray is null)
             {
@@ -93,48 +104,18 @@ namespace Tim.Backend.Controllers.External
                     title: "Missing event request body."));
             }
 
-            var results = new List<CreationResultResponse>();
-
+            var validRequests = new List<IKustoEvent>();
             foreach (var request in requestArray)
             {
-                try
-                {
-                    request.Validate();
-                }
-                catch (ArgumentException ex)
-                {
-                    results.Add(new CreationResultResponse
-                    {
-                        EventId = request.EventId,
-                        Error = ex.Message,
-                        IsSuccess = false,
-                    });
-                    continue;
-                }
-
-                var entity = request.GenerateEvent();
-
-                try
-                {
-                    await m_ingestClient.WriteAsync(new List<IEvent>() { entity }, table, cancellationToken);
-                    results.Add(new CreationResultResponse
-                    {
-                        EventId = request.EventId,
-                        IsSuccess = true,
-                    });
-                }
-                catch (Exception ex)
-                {
-                    results.Add(new CreationResultResponse
-                    {
-                        EventId = request.EventId,
-                        Error = ex.Message,
-                        IsSuccess = false,
-                    });
-                }
+                request.Validate();
+                validRequests.Add(request);
             }
 
-            return results;
+            await m_ingestClient.WriteAsync(
+                validRequests,
+                kustoTable,
+                cancellationToken);
+            return Ok();
         }
     }
 }

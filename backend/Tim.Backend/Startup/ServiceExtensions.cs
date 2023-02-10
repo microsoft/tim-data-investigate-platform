@@ -11,6 +11,7 @@ namespace Tim.Backend.Startup
     using System.Threading.Tasks;
     using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
+    using Kusto.Ingest;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
@@ -22,10 +23,11 @@ namespace Tim.Backend.Startup
     using Microsoft.OpenApi.Models;
     using Serilog;
     using StackExchange.Redis;
-    using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Models.KustoQuery;
+    using Tim.Backend.Models.TaggedEvents.Tables;
     using Tim.Backend.Models.Templates;
     using Tim.Backend.Providers.Database;
+    using Tim.Backend.Providers.Kusto;
     using Tim.Backend.Startup;
     using Tim.Backend.Startup.Config;
     using Tim.Common;
@@ -99,9 +101,9 @@ namespace Tim.Backend.Startup
                 services.AddLogging(builder =>
                 {
                     Log.Logger = new LoggerConfiguration()
-                                       .MinimumLevel.Information()
-                                       .WriteTo.Console()
-                                       .CreateLogger();
+                        .MinimumLevel.Information()
+                        .WriteTo.Console()
+                        .CreateLogger();
 
                     builder.AddSerilog(Log.Logger);
                 });
@@ -174,6 +176,23 @@ namespace Tim.Backend.Startup
         }
 
         /// <summary>
+        /// Initialization code for services.
+        /// </summary>
+        /// <param name="host">The host object to modify.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task InitializeAsync(this IWebHost host)
+        {
+            if (host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
+            await host.InitializeDatabaseAsync();
+            await host.InitializeKustoAsync();
+        }
+
+        /// <summary>
         /// Initialization code for the database client.
         /// </summary>
         /// <param name="host">The host object to modify.</param>
@@ -188,8 +207,37 @@ namespace Tim.Backend.Startup
 
             var scope = host.Services.CreateScope();
             var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
-            await dbService.Connect();
-            await dbService.Initialize();
+            await dbService.ConnectAsync();
+            await dbService.InitializeAsync();
+        }
+
+        /// <summary>
+        /// Initialization code for the kusto tables.
+        /// </summary>
+        /// <param name="host">The host object to modify.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task InitializeKustoAsync(this IWebHost host)
+        {
+            if (host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
+            var scope = host.Services.CreateScope();
+            var adminClient = scope.ServiceProvider.GetService<KustoAdminClient>();
+
+            var savedEventTable = scope.ServiceProvider.GetService<SavedEventTable>();
+            var eventCommentTable = scope.ServiceProvider.GetService<EventCommentTable>();
+            var eventTagTable = scope.ServiceProvider.GetService<EventTagTable>();
+
+            await adminClient.CreateTableAsync(savedEventTable);
+            await adminClient.CreateTableAsync(eventCommentTable);
+            await adminClient.CreateTableAsync(eventTagTable);
+
+            await adminClient.CreateTableMappingAsync(savedEventTable);
+            await adminClient.CreateTableMappingAsync(eventCommentTable);
+            await adminClient.CreateTableMappingAsync(eventTagTable);
         }
 
         /// <summary>
@@ -250,19 +298,20 @@ namespace Tim.Backend.Startup
             var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
             kustoConfigs.Validate();
 
-            services.AddSingleton(p =>
+            services.AddScoped(p =>
             {
-                var connectionString = new KustoConnectionStringBuilder
-                {
-                    DataSource = kustoConfigs.IngestKustoClusterUri,
-                    InitialCatalog = kustoConfigs.KustoDatabase,
-                    FederatedSecurity = true,
-                    ApplicationClientId = kustoConfigs.KustoAppId,
-                    ApplicationKey = kustoConfigs.KustoAppKey,
-                    ApplicationNameForTracing = "TIM-Ingest-To-Kusto",
-                };
+                var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
+                    .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
+                var client = KustoIngestFactory.CreateDirectIngestClient(connectionString);
+                return new KustoIngestClient(client);
+            });
 
-                return new KustoIngestClient(connectionString);
+            services.AddScoped(p =>
+            {
+                var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
+                    .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
+
+                return new KustoAdminClient(connectionString);
             });
         }
 
@@ -330,6 +379,10 @@ namespace Tim.Backend.Startup
                     },
                 });
             });
+
+            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<SavedEventTable>(kustoConfigs.KustoDatabase));
+            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<EventTagTable>(kustoConfigs.KustoDatabase));
+            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<EventCommentTable>(kustoConfigs.KustoDatabase));
         }
 
         /// <summary>

@@ -26,7 +26,7 @@ namespace TIM.Backend
         public static async Task Main(string[] args)
         {
             var host = BuildWebHost(args);
-            await host.InitializeDatabaseAsync();
+            await host.InitializeAsync();
             await host.RunAsync();
         }
 
