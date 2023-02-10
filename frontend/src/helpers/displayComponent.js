@@ -83,7 +83,7 @@ export const runNewQuery = async (
     await store.dispatch('displayComponent/updateComponentState', {
       uuid,
       isExecuting: false,
-      executionTime: result.queryInfo.ExecutionTime,
+      executionTime: result.queryInfo.execution_time,
       cpuUsage: result.queryInfo?.resource_usage?.cpu['total cpu'],
       memoryUsage: result.queryInfo?.resource_usage?.memory?.peak_per_node,
       rowCount: result.data.length,

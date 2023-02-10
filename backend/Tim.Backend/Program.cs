@@ -5,12 +5,10 @@
 namespace TIM.Backend
 {
     using System;
-
+    using System.Threading.Tasks;
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
-    using Microsoft.Extensions.Configuration;
     using Tim.Backend.Startup;
-    using Tim.Backend.Startup.Config;
     using Tim.Flow;
 
     /// <summary>
@@ -24,9 +22,12 @@ namespace TIM.Backend
         /// Main method.
         /// </summary>
         /// <param name="args">Command line args.</param>
-        public static void Main(string[] args)
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            var host = BuildWebHost(args);
+            await host.InitializeDatabaseAsync();
+            await host.RunAsync();
         }
 
         /// <summary>
@@ -42,11 +43,6 @@ namespace TIM.Backend
                 .ConfigureAppConfiguration((config) =>
                 {
                     config.Build();
-
-                    if (Env.CurrentEnvironment == RuntimeEnvironment.PPE)
-                    {
-                        config.AddUserSecrets<AzureResourcesSectionSecrets>();
-                    }
                 })
                 .UseStartup<Startup>()
                 .Build();

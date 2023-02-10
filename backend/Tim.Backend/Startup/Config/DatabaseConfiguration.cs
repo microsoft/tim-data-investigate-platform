@@ -1,4 +1,4 @@
-﻿// <copyright file="AzureResourcesSectionSecrets.cs" company="Microsoft">
+﻿// <copyright file="DatabaseConfiguration.cs" company="Microsoft">
 //   Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -10,28 +10,16 @@ namespace Tim.Backend.Startup.Config
     using System.Linq;
 
     /// <summary>
-    /// Azure Resources Section secrets represents configuration secrets that come either from secrets.yaml or env variables.
+    /// BucketName bucket, scope and collection names.
     /// </summary>
-    public class AzureResourcesSectionSecrets
+    public class DatabaseConfiguration
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="AzureResourcesSectionSecrets"/> class.
+        /// Initializes a new instance of the <see cref="DatabaseConfiguration"/> class.
         /// </summary>
-        public AzureResourcesSectionSecrets()
+        public DatabaseConfiguration()
         {
         }
-
-        /// <summary>
-        /// Gets or sets Redis Hosts for connecting to redis.
-        /// </summary>
-        [Required]
-        public string RedisHosts { get; set; } = Environment.GetEnvironmentVariable("REDIS_HOSTS");
-
-        /// <summary>
-        /// Gets or sets Redis Password for connecting to redis.
-        /// </summary>
-        [Required]
-        public string RedisPassword { get; set; } = Environment.GetEnvironmentVariable("REDIS_PASSWORD");
 
         /// <summary>
         /// Gets or sets and sets database client connection.
@@ -49,13 +37,13 @@ namespace Tim.Backend.Startup.Config
         /// Gets or Sets the Db password for database client connection.
         /// </summary>
         [Required]
-        public string DbUserPassword { get; set; } = Environment.GetEnvironmentVariable("DB_USER_PASSWORD") ?? "password";
+        public string DbUserPassword { get; set; } = Environment.GetEnvironmentVariable("DB_USER_PASSWORD");
 
         /// <summary>
-        /// Gets or sets the kusto app secret key.
+        /// Gets or sets the database name.
         /// </summary>
         [Required]
-        public string KustoAppKey { get; set; } = Environment.GetEnvironmentVariable("KUSTO_APP_KEY");
+        public string BucketName { get; set; } = Environment.GetEnvironmentVariable("DATABASE_NAME") ?? "default";
 
         /// <summary>
         /// Ensures that all required values are populated.

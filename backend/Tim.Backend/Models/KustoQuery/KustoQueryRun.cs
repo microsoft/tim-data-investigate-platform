@@ -5,31 +5,48 @@
 namespace Tim.Backend.Models.KustoQuery
 {
     using System;
-    using Tim.Backend.DataProviders.Clients;
+    using System.Collections.Generic;
 
     /// <summary>
-    /// This object represents an instance of an executed query
-    /// Query can be a saved one or simply a temporary one that was passed over via a request
-    /// In tha same the query is temporary, the Query GUid will be an empty Guid
-    /// otherwise the query guid will represent the Guid that can be used to find the actual query in the SavedQueries table in cosmosdb.
+    /// Query Run states.
     /// </summary>
-    public class KustoQueryRun
+    public enum QueryRunStates
+    {
+        /// <summary>
+        /// Query first created.
+        /// </summary>
+        Created,
+
+        /// <summary>
+        /// Query completed.
+        /// </summary>
+        Completed,
+
+        /// <summary>
+        /// Query had an error.
+        /// </summary>
+        Error,
+
+        /// <summary>
+        /// Query timed out.
+        /// </summary>
+        TimedOut,
+    }
+
+    /// <summary>
+    /// This object represents an instance of an executed query.
+    /// </summary>
+    public class KustoQueryRun : IJsonEntity
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoQueryRun"/> class.
         /// </summary>
-        /// <param name="triggeredBy">Who the query run was triggered by.</param>
-        /// <param name="queryId">Query to be run.</param>
-        /// <param name="start">Start time window of query to be executed.</param>
-        /// <param name="end">End time window of query to be executed.</param>
-        public KustoQueryRun(string triggeredBy, Guid queryId, DateTime start, DateTime end)
+        /// <param name="query">Query details.</param>
+        public KustoQueryRun(KustoQuery query)
         {
-            TriggeredBy = triggeredBy;
-            QueryId = queryId;
+            KustoQuery = query;
             QueryRunId = Guid.NewGuid();
-            QueryStartDateTimeUtc = start;
-            QueryEndDateTimeUtc = end;
-            TriggeredDateTimeUtc = DateTime.UtcNow;
+            ExecuteDateTimeUtc = DateTime.UtcNow;
             Status = QueryRunStates.Created;
         }
 
@@ -40,28 +57,18 @@ namespace Tim.Backend.Models.KustoQuery
         {
         }
 
-        /// <summary>
-        /// Query Run states.
-        /// </summary>
-        public enum QueryRunStates
-        {
-#pragma warning disable SA1602 // Enumeration items should be documented
-            Created,
-            Completed,
-            Error,
-            TimedOut,
-#pragma warning restore SA1602 // Enumeration items should be documented
-        }
+        /// <inheritdoc/>
+        public string Id => QueryRunId.ToString();
 
         /// <summary>
-        /// Gets or sets who the query run was triggered by.
+        /// Gets or sets the query associated with this query run.
         /// </summary>
-        public string TriggeredBy { get; set; }
+        public KustoQuery KustoQuery { get; set; }
 
         /// <summary>
         /// Gets or sets the time the query run was triggered.
         /// </summary>
-        public DateTime TriggeredDateTimeUtc { get; set; }
+        public DateTime ExecuteDateTimeUtc { get; set; }
 
         /// <summary>
         /// Gets or sets the query run Id.
@@ -69,9 +76,14 @@ namespace Tim.Backend.Models.KustoQuery
         public Guid QueryRunId { get; set; }
 
         /// <summary>
-        /// Gets or sets the query Id.
+        /// Gets or sets the query run status.
         /// </summary>
-        public Guid QueryId { get; set; }
+        public QueryRunStates Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the resulting data from the query.
+        /// </summary>
+        public IEnumerable<IDictionary<string, object>> ResultData { get; set; }
 
         /// <summary>
         /// Gets or sets the row count based on query run results.
@@ -84,28 +96,13 @@ namespace Tim.Backend.Models.KustoQuery
         public KustoQueryStats ExecutionMetrics { get; set; }
 
         /// <summary>
-        /// Gets or sets the Errors if present.
+        /// Gets or sets the stacktrace if present.
         /// </summary>
-        public Exception Errors { get; set; }
+        public string StackTrace { get; set; }
 
         /// <summary>
         /// Gets or sets the main error in case there are nested errors.
         /// </summary>
         public string MainError { get; set; }
-
-        /// <summary>
-        /// Gets or sets the query run start time.
-        /// </summary>
-        public DateTime QueryStartDateTimeUtc { get; set; }
-
-        /// <summary>
-        /// Gets or sets the query run end time.
-        /// </summary>
-        public DateTime QueryEndDateTimeUtc { get; set; }
-
-        /// <summary>
-        /// Gets or sets the query run status.
-        /// </summary>
-        public QueryRunStates Status { get; set; }
     }
 }

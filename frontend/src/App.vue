@@ -226,7 +226,7 @@ export default {
           d.elStartX = d.el.getBoundingClientRect().left;
           d.elStartY = d.el.getBoundingClientRect().top;
           d.el.style.position = 'fixed';
-          d.el.style.margin = 0;
+          d.el.style.margin = '0';
           d.oldTransition = d.el.style.transition;
           d.el.style.transition = 'none';
         }
@@ -259,8 +259,8 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../node_modules/ag-grid-community/dist/styles/ag-grid.css";
-@import "../node_modules/ag-grid-community/dist/styles/ag-theme-balham.css";
+@import "../node_modules/ag-grid-community/styles/ag-grid.css";
+@import "../node_modules/ag-grid-community/styles/ag-theme-balham.css";
 </style>
 
 <style>

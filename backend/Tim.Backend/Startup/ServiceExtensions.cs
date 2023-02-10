@@ -8,7 +8,7 @@ namespace Tim.Backend.Startup
     using System.Collections.Generic;
     using System.IO;
     using System.Reflection;
-    using System.Text;
+    using System.Threading.Tasks;
     using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,14 +17,15 @@ namespace Tim.Backend.Startup
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Identity.Client;
     using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
     using Serilog;
     using StackExchange.Redis;
     using Tim.Backend.DataProviders.Clients;
+    using Tim.Backend.Models.KustoQuery;
+    using Tim.Backend.Models.Templates;
     using Tim.Backend.Providers.Database;
-    using Tim.Backend.Providers.Readers;
-    using Tim.Backend.Providers.Writers.KustoQuery;
     using Tim.Backend.Startup;
     using Tim.Backend.Startup.Config;
     using Tim.Common;
@@ -34,10 +35,6 @@ namespace Tim.Backend.Startup
     /// </summary>
     public static class ServiceExtensions
     {
-        private const string c_azureADSectionName = "AzureAd";
-        private static readonly string s_scheme = Environment.GetEnvironmentVariable("AUTH_SCHEME") ?? "AzureAD";
-        private static readonly string s_instance = Environment.GetEnvironmentVariable("AUTH_INSTANCE") ?? "https://login.microsoftonline.com";
-
         /// <summary>
         /// Add proper service configurations.
         /// </summary>
@@ -67,9 +64,10 @@ namespace Tim.Backend.Startup
 
             services.AddOptions();
             services.Configure<KustoConfiguration>(configuration.GetSection(nameof(KustoConfiguration)));
-            services.Configure<DatabaseClasses>(configuration.GetSection(nameof(DatabaseClasses)));
+            services.Configure<DatabaseConfiguration>(configuration.GetSection(nameof(DatabaseConfiguration)));
             services.Configure<AuthConfiguration>(configuration.GetSection(nameof(AuthConfiguration)));
-            services.Configure<AzureResourcesSectionSecrets>(configuration.GetSection(nameof(AzureResourcesSectionSecrets)));
+            services.Configure<RedisConfiguration>(configuration.GetSection(nameof(RedisConfiguration)));
+            services.Configure<SwaggerConfiguration>(configuration.GetSection(nameof(SwaggerConfiguration)));
         }
 
         /// <summary>
@@ -137,16 +135,120 @@ namespace Tim.Backend.Startup
                 throw new ArgumentNullException(nameof(environment));
             }
 
-            var secrets = configuration.GetSection(nameof(AzureResourcesSectionSecrets)).Get<AzureResourcesSectionSecrets>() ?? new AzureResourcesSectionSecrets();
-
             // create  kusto and database configuration since it is not being loaded from services set up, but grabbing either env or default values
-            var dbConfigs = new DatabaseClasses();
-            var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
             var authConfigs = configuration.GetSection(nameof(AuthConfiguration)).Get<AuthConfiguration>() ?? new AuthConfiguration();
-
-            secrets.Validate();
-            kustoConfigs.Validate();
             authConfigs.Validate();
+
+            var authenticationSchemes = new List<string>();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.Audience = authConfigs.ClientId;
+                    options.Authority = $"https://login.microsoftonline.com/{authConfigs.ClientAuthority}";
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = "https://login.microsoftonline.com/{authConfigs.ClientAuthority}",
+                        ValidAudience = $"api://{authConfigs.ClientId}",
+                        RequireExpirationTime = true,
+                        ValidateLifetime = true,
+                        RequireSignedTokens = true,
+                    };
+                    options.SaveToken = true;
+                });
+
+            services.AddSingleton(p =>
+            {
+                return ConfidentialClientApplicationBuilder.Create(authConfigs.ClientId)
+                    .WithAuthority($"https://login.microsoftonline.com/{authConfigs.ClientAuthority}")
+                    .WithClientSecret(authConfigs.ClientSecret)
+                    .Build();
+            });
+
+            services.AddPolicyRegistry();
+
+            services.AddSingleton<ISharedCache, InMemoryCache>();
+        }
+
+        /// <summary>
+        /// Initialization code for the database client.
+        /// </summary>
+        /// <param name="host">The host object to modify.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task InitializeDatabaseAsync(this IWebHost host)
+        {
+            if (host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
+            var scope = host.Services.CreateScope();
+            var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
+            await dbService.Connect();
+            await dbService.Initialize();
+        }
+
+        /// <summary>
+        /// Add couchbase service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddCouchBase(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            dbConfigs.Validate();
+
+            var cbClient = new CouchbaseDbClient(dbConfigs);
+            services.AddScoped<IDatabaseClient, CouchbaseDbClient>(p => cbClient);
+            services.AddScoped<IDatabaseRepository<KustoQueryRun>, CouchbaseRepository<KustoQueryRun>>(p => new CouchbaseRepository<KustoQueryRun>(cbClient));
+            services.AddScoped<IDatabaseRepository<QueryTemplate>, CouchbaseRepository<QueryTemplate>>(p => new CouchbaseRepository<QueryTemplate>(cbClient));
+        }
+
+        /// <summary>
+        /// Add redis service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddRedis(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var redisConfigs = configuration.GetSection(nameof(RedisConfiguration)).Get<RedisConfiguration>() ?? new RedisConfiguration();
+            redisConfigs.Validate();
+
+            services.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(p =>
+            {
+                var endpoints = new EndPointCollection();
+                redisConfigs.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
+                return ConnectionMultiplexer.Connect(
+                    new ConfigurationOptions()
+                    {
+                        EndPoints = endpoints,
+                        Password = redisConfigs.RedisPassword,
+                    });
+            });
+        }
+
+        /// <summary>
+        /// Add Kusto service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddKusto(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
+            kustoConfigs.Validate();
 
             services.AddSingleton(p =>
             {
@@ -156,66 +258,12 @@ namespace Tim.Backend.Startup
                     InitialCatalog = kustoConfigs.KustoDatabase,
                     FederatedSecurity = true,
                     ApplicationClientId = kustoConfigs.KustoAppId,
-                    ApplicationKey = secrets.KustoAppKey,
+                    ApplicationKey = kustoConfigs.KustoAppKey,
                     ApplicationNameForTracing = "TIM-Ingest-To-Kusto",
                 };
 
                 return new KustoIngestClient(connectionString);
             });
-
-            services.AddSingleton(p =>
-            {
-                var connectionString = new KustoConnectionStringBuilder
-                {
-                    DataSource = kustoConfigs.KustoClusterUri,
-                    InitialCatalog = kustoConfigs.KustoDatabase,
-                    FederatedSecurity = true,
-                    ApplicationClientId = kustoConfigs.KustoAppId,
-                    ApplicationKey = secrets.KustoAppKey,
-                    ApplicationNameForTracing = "TIM-Query-To-Kusto",
-                };
-
-                return new KustoQueryClient(connectionString);
-            });
-
-            var authenticationSchemes = new List<string>();
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfigs.SigningKey)),
-                    };
-                });
-
-            services.AddPolicyRegistry();
-
-            services.AddSingleton<IKustoQueryWorker, RunKustoQueryWorker>();
-
-            services.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(p =>
-            {
-                var endpoints = new EndPointCollection();
-                secrets.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
-                return ConnectionMultiplexer.Connect(
-                    new ConfigurationOptions()
-                    {
-                        EndPoints = endpoints,
-                        Password = secrets.RedisPassword,
-                    });
-            });
-
-            services.AddScoped<IKustoUserReader, KustoUserReader>();
-
-            services.AddSingleton<IDatabaseClient, DatabaseClient>(p =>
-            {
-                return new DatabaseClient(DatabaseClient.DatabaseClientType.CouchBaseDb, secrets, dbConfigs);
-            });
-
-            services.AddSingleton<ISharedCache, InMemoryCache>();
         }
 
         /// <summary>
@@ -225,8 +273,8 @@ namespace Tim.Backend.Startup
         /// <param name="configuration">Defined configuration.</param>
         /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
         public static void AddSwagger(
-          this IServiceCollection services,
-          IConfiguration configuration)
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
             if (services is null)
             {
@@ -256,7 +304,6 @@ namespace Tim.Backend.Startup
 
                 // Schema IDs are by default Type's Name but unfortunately we have collisions.
                 c.CustomSchemaIds(t => t.FullName);
-                var secrets = configuration.GetSection(nameof(AzureResourcesSectionSecrets)).Get<AzureResourcesSectionSecrets>();
 
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                 {
@@ -305,7 +352,8 @@ namespace Tim.Backend.Startup
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            var secrets = configuration.GetSection(nameof(AzureResourcesSectionSecrets)).Get<AzureResourcesSectionSecrets>();
+            var serverConfigs = configuration.GetSection(nameof(SwaggerConfiguration)).Get<SwaggerConfiguration>() ?? new SwaggerConfiguration();
+            serverConfigs.Validate();
 
             app.UseSwagger(c =>
             {
@@ -315,7 +363,7 @@ namespace Tim.Backend.Startup
                     //  NOTE: in K8s, our Nginx ingress controller adds these headers
                     var protocol = httpReq.Headers.TryGetHeaderValueWithDefault("X-Forwarded-Proto", httpReq.Scheme);
                     var hostName = httpReq.Headers.TryGetHeaderValueWithDefault("X-Forwarded-Host", httpReq.Host.ToString());
-                    var serverUrl = $"{protocol}://{hostName}{configuration.GetValue<string>("AzureResourcesSection:ControllerPath")}/";
+                    var serverUrl = $"{protocol}://{hostName}{serverConfigs.ApiBasePath}";
 
                     // Servers property on swagger is required for certain scanners to work correctly.
                     swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = serverUrl } };
@@ -331,8 +379,8 @@ namespace Tim.Backend.Startup
             string defaultValue)
         {
             return headers.TryGetValue(headerName, out var headerValue) && !string.IsNullOrEmpty(headerValue)
-                                ? headerValue.ToString()
-                                : defaultValue;
+                ? headerValue.ToString()
+                : defaultValue;
         }
     }
 }
