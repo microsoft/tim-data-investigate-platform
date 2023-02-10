@@ -299,18 +299,17 @@ namespace Tim.Backend.Startup
             var kustoConfigs = configuration.GetSection(nameof(KustoConfiguration)).Get<KustoConfiguration>() ?? new KustoConfiguration();
             kustoConfigs.Validate();
 
+            var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
+                .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
+
             services.AddScoped(p =>
             {
-                var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
-                    .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
                 var client = KustoIngestFactory.CreateDirectIngestClient(connectionString);
                 return new KustoIngestClient(client);
             });
 
             services.AddScoped(p =>
             {
-                var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
-                    .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
                 var client = KustoClientFactory.CreateCslAdminProvider(connectionString);
                 return new KustoAdminClient(client);
             });
