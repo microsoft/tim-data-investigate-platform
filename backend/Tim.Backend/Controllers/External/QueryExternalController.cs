@@ -26,6 +26,8 @@ namespace Tim.Backend.Controllers.External
     [Authorize]
     public class QueryExternalController : Controller
     {
+        private const string c_defaultKustoScope = "https://help.kusto.windows.net/.default";
+
         private readonly IConfidentialClientApplication m_authClient;
         private readonly IDatabaseRepository<KustoQueryRun> m_dbRepository;
         private readonly ILogger m_logger;
@@ -101,7 +103,7 @@ namespace Tim.Backend.Controllers.External
         private async Task<KustoQueryClient> GetOBOKustoClient(KustoQuery queryRequest, string accessToken)
         {
             var userAssertion = new UserAssertion(accessToken);
-            var scopes = new string[] { $"https://help.kusto.windows.net/.default" };
+            var scopes = new string[] { c_defaultKustoScope };
 
             var requestToken = await m_authClient.AcquireTokenOnBehalfOf(scopes, userAssertion).ExecuteAsync();
 

@@ -22,6 +22,10 @@ namespace Tim.Backend.Providers.Database
     /// </summary>
     public class CouchbaseDbClient : IDatabaseClient
     {
+        private const int c_retryMultipler = 500;
+        private static readonly TimeSpan s_initializationTimeout = TimeSpan.FromMinutes(2);
+        private static readonly TimeSpan s_queryTimeout = TimeSpan.FromSeconds(10);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CouchbaseDbClient"/> class.
         /// </summary>
@@ -29,7 +33,6 @@ namespace Tim.Backend.Providers.Database
         public CouchbaseDbClient(DatabaseConfiguration dbConfigs)
         {
             Logger = Log.Logger;
-
             Configs = dbConfigs;
         }
 
@@ -73,7 +76,7 @@ namespace Tim.Backend.Providers.Database
                 {
                     UserName = Configs.DbUserName,
                     Password = Configs.DbUserPassword,
-                    KvTimeout = TimeSpan.FromSeconds(10),
+                    KvTimeout = s_queryTimeout,
                 });
             Logger.Information($"CouchbaseDbClient has been created.");
         }
@@ -86,7 +89,7 @@ namespace Tim.Backend.Providers.Database
                 throw new InvalidOperationException("CouchBaseClient must be initialized with a connection.");
             }
 
-            await CouchBaseClient.WaitUntilReadyAsync(TimeSpan.FromMinutes(2));
+            await CouchBaseClient.WaitUntilReadyAsync(s_initializationTimeout);
             Bucket = await CreateBucketIfNotExists(Configs.BucketName);
             await CreateCollectionIfNotExists<KustoQueryRun>();
             await CreateCollectionIfNotExists<QueryTemplate>();
@@ -136,7 +139,7 @@ namespace Tim.Backend.Providers.Database
                 while (retries++ < 3)
                 {
                     await Bucket.Collections.CreateCollectionAsync(collectionSpec);
-                    await Task.Delay(TimeSpan.FromMilliseconds(retries * 500));
+                    await Task.Delay(TimeSpan.FromMilliseconds(retries * c_retryMultipler));
                 }
             }
             catch (CollectionExistsException)
@@ -162,6 +165,7 @@ namespace Tim.Backend.Providers.Database
             var buckets = await CouchBaseClient.Buckets.GetAllBucketsAsync();
             if (!buckets.ContainsKey(bucketName))
             {
+                // TODO: This should be configured by the couchbase server and not hard coded here
                 await CouchBaseClient.Buckets.CreateBucketAsync(new BucketSettings
                 {
                     BucketType = BucketType.Couchbase,

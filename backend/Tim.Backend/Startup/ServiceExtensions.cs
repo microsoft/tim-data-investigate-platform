@@ -151,7 +151,6 @@ namespace Tim.Backend.Startup
                         ValidateIssuer = true,
                         ValidateAudience = true,
                         ValidateIssuerSigningKey = true,
-                        /*IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfigs.SigningKey))*/
                         ValidIssuer = "https://login.microsoftonline.com/{authConfigs.ClientAuthority}",
                         ValidAudience = $"api://{authConfigs.ClientId}",
                         RequireExpirationTime = true,

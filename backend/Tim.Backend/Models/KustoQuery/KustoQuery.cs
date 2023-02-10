@@ -48,7 +48,7 @@ namespace Tim.Backend.Models.KustoQuery
         /// Gets or sets the query.
         /// </summary>
         [JsonProperty("query")]
-        public string Query { get; set; }
+        public string QueryText { get; set; }
 
         /// <summary>
         /// Validates the arguments in the request and throws an exception when error is found.
@@ -56,9 +56,9 @@ namespace Tim.Backend.Models.KustoQuery
         /// <exception cref="ArgumentException">Throws if any argument is invalid.</exception>
         public void Validate()
         {
-            if (string.IsNullOrEmpty(Query))
+            if (string.IsNullOrEmpty(QueryText))
             {
-                throw new ArgumentException("Argument must be specified", nameof(Query));
+                throw new ArgumentException("Argument must be specified", nameof(QueryText));
             }
 
             if (string.IsNullOrEmpty(RequestedBy))
@@ -66,12 +66,12 @@ namespace Tim.Backend.Models.KustoQuery
                 throw new ArgumentException("Argument must be specified", nameof(RequestedBy));
             }
 
-            if (string.IsNullOrEmpty(Query))
+            if (string.IsNullOrEmpty(QueryText))
             {
                 throw new ArgumentException("Argument must be specified", nameof(Cluster));
             }
 
-            if (string.IsNullOrEmpty(Query))
+            if (string.IsNullOrEmpty(QueryText))
             {
                 throw new ArgumentException("Argument must be specified", nameof(Database));
             }
