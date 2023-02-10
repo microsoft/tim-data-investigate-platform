@@ -11,6 +11,7 @@ namespace Tim.Backend.Startup
     using System.Threading.Tasks;
     using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
+    using Kusto.Data.Net.Client;
     using Kusto.Ingest;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
     using Microsoft.AspNetCore.Builder;
@@ -310,9 +311,13 @@ namespace Tim.Backend.Startup
             {
                 var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
                     .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
-
-                return new KustoAdminClient(connectionString);
+                var client = KustoClientFactory.CreateCslAdminProvider(connectionString);
+                return new KustoAdminClient(client);
             });
+
+            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<SavedEventTable>(kustoConfigs.KustoDatabase));
+            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<EventTagTable>(kustoConfigs.KustoDatabase));
+            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<EventCommentTable>(kustoConfigs.KustoDatabase));
         }
 
         /// <summary>
@@ -379,10 +384,6 @@ namespace Tim.Backend.Startup
                     },
                 });
             });
-
-            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<SavedEventTable>(kustoConfigs.KustoDatabase));
-            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<EventTagTable>(kustoConfigs.KustoDatabase));
-            services.AddScoped(p => KustoTableFactory.CreateKustoTableSpec<EventCommentTable>(kustoConfigs.KustoDatabase));
         }
 
         /// <summary>

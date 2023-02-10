@@ -5,10 +5,8 @@
 namespace Tim.Backend.Providers.Kusto
 {
     using System.Threading.Tasks;
-    using global::Kusto.Data;
     using global::Kusto.Data.Common;
     using global::Kusto.Data.Ingestion;
-    using global::Kusto.Data.Net.Client;
     using Serilog;
     using Tim.Backend.Models.TaggedEvents.Tables;
 
@@ -23,13 +21,11 @@ namespace Tim.Backend.Providers.Kusto
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoAdminClient"/> class.
         /// </summary>
-        /// <param name="connectionStringBuilder">Connection sting builder.</param>
-        public KustoAdminClient(KustoConnectionStringBuilder connectionStringBuilder)
+        /// <param name="client">Kusto client.</param>
+        public KustoAdminClient(ICslAdminProvider client)
         {
             m_logger = Log.Logger;
-            m_logger.Information($"Initializing KustoAdminClient for cluster {connectionStringBuilder.DataSource} database {connectionStringBuilder.InitialCatalog}.");
-            m_client = KustoClientFactory.CreateCslAdminProvider(connectionStringBuilder);
-            m_logger.Information("Done initializing KustoAdminClient.");
+            m_client = client;
         }
 
         /// <summary>
@@ -40,6 +36,7 @@ namespace Tim.Backend.Providers.Kusto
         public async Task CreateTableAsync(IKustoTable kustoTable)
         {
             var command = CslCommandGenerator.GenerateTableCreateCommand(kustoTable.TableName, kustoTable.TableSchema);
+            m_logger.Information($"Attempting to create new table {kustoTable.TableName}.", "KustoAdminClient-CreateTableAsync");
             await m_client.ExecuteControlCommandAsync(kustoTable.DatabaseName, command);
         }
 
@@ -55,6 +52,7 @@ namespace Tim.Backend.Providers.Kusto
                 kustoTable.TableName,
                 kustoTable.TableMappingName,
                 kustoTable.ColumnMappings);
+            m_logger.Information($"Attempting to create new table mapping {kustoTable.TableMappingName}.", "KustoAdminClient-CreateTableMappingAsync");
             await m_client.ExecuteControlCommandAsync(kustoTable.DatabaseName, command);
         }
     }

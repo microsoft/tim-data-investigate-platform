@@ -31,14 +31,11 @@ namespace Tim.Backend.Providers.Kusto
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoQueryClient"/> class.
         /// </summary>
-        /// <param name="connectionStringBuilder">Connection string builder.</param>
-        public KustoQueryClient(KustoConnectionStringBuilder connectionStringBuilder)
+        /// <param name="client">Kusto client.</param>
+        public KustoQueryClient(IKustoStatelessClient client)
         {
             m_logger = Log.Logger;
-            var type = !string.IsNullOrEmpty(connectionStringBuilder.UserToken) ? "user" : "service";
-            m_logger.Information($"Initializing KustoQueryClient for cluster: {connectionStringBuilder.DataSource} database: {connectionStringBuilder.InitialCatalog} Client type: {type}.");
-            m_client = KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder) as IKustoStatelessClient;
-            m_logger.Information("Done initializing KustoQueryClient.");
+            m_client = client;
         }
 
         /// <summary>
@@ -52,7 +49,8 @@ namespace Tim.Backend.Providers.Kusto
         {
             var builder = new KustoConnectionStringBuilder(clusterUrl, databaseName)
                 .WithAadUserTokenAuthentication(token);
-            return new KustoQueryClient(builder);
+            var client = KustoClientFactory.CreateCslQueryProvider(builder) as IKustoStatelessClient;
+            return new KustoQueryClient(client);
         }
 
         /// <summary>
@@ -106,7 +104,8 @@ namespace Tim.Backend.Providers.Kusto
         /// <inheritdoc/>
         public async Task<KustoQueryResults<IDictionary<string, object>>> RunQuery(KustoQuery query, CancellationToken cancellationToken)
         {
-            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.Query, null, cancellationToken);
+            m_logger.Information($"Executing kusto query on cluster {query.Cluster}.", "KustoQueryClient-RunQuery");
+            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.QueryText, new ClientRequestProperties(), cancellationToken);
             var queryResults = new List<IDictionary<string, object>>();
             KustoQueryStats queryStats = null;
             var frames = dataSet.GetFrames();
@@ -161,7 +160,7 @@ namespace Tim.Backend.Providers.Kusto
             }
 
             m_logger.Information($"Executing query using Kusto's ExecuteQueryV2Async. Client Request Id: {clientRequestProperties.ClientRequestId} ", "KustoQueryClient-ExecuteQueryAsync");
-            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.Query, clientRequestProperties);
+            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.QueryText, clientRequestProperties);
             m_logger.Information($"Query completed. Client Request Id: {clientRequestProperties.ClientRequestId} ", "KustoQueryClient-ExecuteQueryAsync");
             return dataSet.GetFrames();
         }

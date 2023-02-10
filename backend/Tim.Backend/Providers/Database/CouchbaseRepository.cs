@@ -20,14 +20,15 @@ namespace Tim.Backend.Providers.Database
     public class CouchbaseRepository<TJsonEntity> : IDatabaseRepository<TJsonEntity>
         where TJsonEntity : IJsonEntity
     {
+        private readonly ILogger m_logger;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CouchbaseRepository{TJsonEntity}"/> class.
         /// </summary>
         /// <param name="dbClient">Couchbase client.</param>
         public CouchbaseRepository(CouchbaseDbClient dbClient)
         {
-            Logger = Log.Logger;
-
+            m_logger = Log.Logger;
             DatabaseClient = dbClient;
             Collection = DatabaseClient.CollectionAsync<TJsonEntity>();
         }
@@ -41,11 +42,6 @@ namespace Tim.Backend.Providers.Database
         /// Gets or sets the Couchbase collection associated with <typeparamref name="TJsonEntity"/>.
         /// </summary>
         public Task<ICouchbaseCollection> Collection { get; set; }
-
-        /// <summary>
-        /// Gets the logger.
-        /// </summary>
-        protected ILogger Logger { get; }
 
         /// <inheritdoc/>
         public async Task AddOrUpdateItemAsync(IJsonEntity entity, TimeSpan? timeToLive = null)
@@ -64,7 +60,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
+                m_logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }
@@ -82,12 +78,12 @@ namespace Tim.Backend.Providers.Database
             catch (DocumentNotFoundException e)
             {
                 // element not found
-                Logger.Error(e, $"Not able to find element with id {id}: " + e.ToString());
+                m_logger.Error(e, $"Not able to find element with id {id}: " + e.ToString());
                 return default;
             }
             catch (Exception e)
             {
-                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
+                m_logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }
@@ -106,7 +102,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
+                m_logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }
@@ -121,7 +117,7 @@ namespace Tim.Backend.Providers.Database
             }
             catch (Exception e)
             {
-                Logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
+                m_logger.Error(e, "CouchbaseDbClient client failed with error: " + e.ToString());
                 throw;
             }
         }

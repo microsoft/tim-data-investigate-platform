@@ -28,7 +28,7 @@ namespace Tim.Backend.Providers.Kusto
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoIngestClient"/> class.
         /// </summary>
-        /// <param name="client">Kusto client to use.</param>
+        /// <param name="client">Kusto client.</param>
         public KustoIngestClient(IKustoIngestClient client)
         {
             m_logger = Log.Logger;
