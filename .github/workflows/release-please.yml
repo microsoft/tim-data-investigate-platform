@@ -53,6 +53,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend
           tags: |
             type=semver,pattern={{version}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
+            type=semver,pattern={{major}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
             type=sha
 
       - name: Build and push Docker image
@@ -70,6 +72,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend-enterprise
           tags: |
             type=semver,pattern={{version}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
+            type=semver,pattern={{major}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
             type=sha
 
       - name: Build and push Docker image (enterprise)
@@ -106,6 +110,8 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
           tags: |
             type=semver,pattern={{version}},value=v${{ needs.release-please.outputs.backend-major }}.${{ needs.release-please.outputs.backend-minor }}.${{ needs.release-please.outputs.backend-patch }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release-please.outputs.backend-major }}.${{ needs.release-please.outputs.backend-minor }}.${{ needs.release-please.outputs.backend-patch }}
+            type=semver,pattern={{major}},value=v${{ needs.release-please.outputs.backend-major }}.${{ needs.release-please.outputs.backend-minor }}.${{ needs.release-please.outputs.backend-patch }}
             type=sha
 
       - name: Build and push Docker image
