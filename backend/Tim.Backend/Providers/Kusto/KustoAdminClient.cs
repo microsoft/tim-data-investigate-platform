@@ -11,7 +11,7 @@ namespace Tim.Backend.Providers.Kusto
     using Tim.Backend.Models.TaggedEvents.Tables;
 
     /// <summary>
-    /// Kusto Ingest Client, responsible to ingesting data into kusto.
+    /// Kusto admin client, responsible for performing control commands.
     /// </summary>
     public class KustoAdminClient
     {

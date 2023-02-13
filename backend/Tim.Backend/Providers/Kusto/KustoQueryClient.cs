@@ -21,7 +21,7 @@ namespace Tim.Backend.Providers.Kusto
     using Tim.Backend.Providers.Query;
 
     /// <summary>
-    /// Kusto Query client is used to query kusto tables.
+    /// Kusto query client, responsible for querying kusto.
     /// </summary>
     public class KustoQueryClient : IKustoQueryClient
     {
