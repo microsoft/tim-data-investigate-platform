@@ -23,7 +23,7 @@ namespace Tim.Backend.Controllers.External
     /// </summary>
     [Route("api/query")]
     [ApiController]
-    [Authorize] 
+    [Authorize]
     public class QueryExternalController : Controller
     {
         private const string c_defaultKustoScope = "https://help.kusto.windows.net/.default";
