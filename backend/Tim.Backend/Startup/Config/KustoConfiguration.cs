@@ -28,6 +28,12 @@ namespace Tim.Backend.Startup.Config
         public string IngestKustoClusterUri { get; set; } = Environment.GetEnvironmentVariable("KUSTO_INGEST_URL");
 
         /// <summary>
+        /// Gets or sets the kusto cluster uri for admin commands.
+        /// </summary>
+        [Required]
+        public string KustoClusterUri { get; set; } = Environment.GetEnvironmentVariable("KUSTO_CLUSTER_URI");
+
+        /// <summary>
         /// Gets or sets the kusto app secret key.
         /// </summary>
         [Required]
@@ -38,6 +44,12 @@ namespace Tim.Backend.Startup.Config
         /// </summary>
         [Required]
         public string KustoAppId { get; set; } = Environment.GetEnvironmentVariable("KUSTO_CLIENT_APP_ID");
+
+        /// <summary>
+        /// Gets or sets the kusto app authority i.e. the tenant id.
+        /// </summary>
+        [Required]
+        public string KustoAppAuthority { get; set; } = Environment.GetEnvironmentVariable("KUSTO_CLIENT_APP_AUTHORITY");
 
         /// <summary>
         /// Gets or sets the kusto database for the main service cluster.

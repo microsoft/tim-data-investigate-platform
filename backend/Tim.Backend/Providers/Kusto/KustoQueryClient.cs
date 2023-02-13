@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
-namespace Tim.Backend.DataProviders.Clients
+namespace Tim.Backend.Providers.Kusto
 {
     using System;
     using System.Collections.Generic;
@@ -11,17 +11,17 @@ namespace Tim.Backend.DataProviders.Clients
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Kusto.Data;
-    using Kusto.Data.Common;
-    using Kusto.Data.Net.Client;
-    using Kusto.Data.Results;
+    using global::Kusto.Data;
+    using global::Kusto.Data.Common;
+    using global::Kusto.Data.Net.Client;
+    using global::Kusto.Data.Results;
     using Newtonsoft.Json;
     using Serilog;
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Providers.Query;
 
     /// <summary>
-    /// Kusto Query client is used to query kusto tables.
+    /// Kusto query client, responsible for querying kusto.
     /// </summary>
     public class KustoQueryClient : IKustoQueryClient
     {
@@ -31,14 +31,11 @@ namespace Tim.Backend.DataProviders.Clients
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoQueryClient"/> class.
         /// </summary>
-        /// <param name="connectionStringBuilder">Connection string builder.</param>
-        public KustoQueryClient(KustoConnectionStringBuilder connectionStringBuilder)
+        /// <param name="client">Kusto client.</param>
+        public KustoQueryClient(IKustoStatelessClient client)
         {
             m_logger = Log.Logger;
-            var type = !string.IsNullOrEmpty(connectionStringBuilder.UserToken) ? "user" : "service";
-            m_logger.Information($"Initializing KustoQueryClient for cluster: {connectionStringBuilder.DataSource} database: {connectionStringBuilder.InitialCatalog} Client type: {type}.");
-            m_client = KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder) as IKustoStatelessClient;
-            m_logger.Information("Done initializing KustoQueryClient.");
+            m_client = client;
         }
 
         /// <summary>
@@ -52,7 +49,8 @@ namespace Tim.Backend.DataProviders.Clients
         {
             var builder = new KustoConnectionStringBuilder(clusterUrl, databaseName)
                 .WithAadUserTokenAuthentication(token);
-            return new KustoQueryClient(builder);
+            var client = KustoClientFactory.CreateCslQueryProvider(builder) as IKustoStatelessClient;
+            return new KustoQueryClient(client);
         }
 
         /// <summary>
@@ -106,6 +104,7 @@ namespace Tim.Backend.DataProviders.Clients
         /// <inheritdoc/>
         public async Task<KustoQueryResults<IDictionary<string, object>>> RunQuery(KustoQuery query, CancellationToken cancellationToken)
         {
+            m_logger.Information($"Executing kusto query on cluster {query.Cluster}.", "KustoQueryClient-RunQuery");
             var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.QueryText, new ClientRequestProperties(), cancellationToken);
             var queryResults = new List<IDictionary<string, object>>();
             KustoQueryStats queryStats = null;

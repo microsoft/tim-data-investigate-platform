@@ -2,7 +2,7 @@
 //   Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
-namespace Tim.Backend.DataProviders.Clients
+namespace Tim.Backend.Providers.Kusto
 {
     using System;
 

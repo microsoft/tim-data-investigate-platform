@@ -13,9 +13,9 @@ namespace Tim.Backend.Controllers.External
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Identity.Client;
     using Serilog;
-    using Tim.Backend.DataProviders.Clients;
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Providers.Database;
+    using Tim.Backend.Providers.Kusto;
     using Tim.Backend.Providers.Query;
 
     /// <summary>

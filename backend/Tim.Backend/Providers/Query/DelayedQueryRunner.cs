@@ -7,6 +7,7 @@ namespace Tim.Backend.Providers.Query
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using Serilog;
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Providers.Database;
 
@@ -16,6 +17,9 @@ namespace Tim.Backend.Providers.Query
     public class DelayedQueryRunner
     {
         private static readonly TimeSpan s_expireTimeSpan = TimeSpan.FromDays(1);
+        private readonly IKustoQueryClient m_queryClient;
+        private readonly IDatabaseRepository<KustoQueryRun> m_databaseRepo;
+        private readonly ILogger m_logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DelayedQueryRunner"/> class.
@@ -26,11 +30,8 @@ namespace Tim.Backend.Providers.Query
         {
             m_queryClient = queryClient;
             m_databaseRepo = databaseRepo;
+            m_logger = Log.Logger;
         }
-
-        private IKustoQueryClient m_queryClient { get; set; }
-
-        private IDatabaseRepository<KustoQueryRun> m_databaseRepo { get; set; }
 
         /// <summary>
         /// Creates a long running task to execute the query. If the query runs within a short period, return the results immediately.
@@ -41,6 +42,8 @@ namespace Tim.Backend.Providers.Query
         public async Task<KustoQueryRun> DelayRun(KustoQuery query, CancellationToken cancellationToken)
         {
             var queryRun = new KustoQueryRun(query);
+
+            m_logger.Information($"Adding query run to database {queryRun.QueryRunId}.", "DelayedQueryRunner-DelayRun");
             await m_databaseRepo.AddOrUpdateItemAsync(queryRun, s_expireTimeSpan);
 
             var runQueryTask = RunAndPersistQuery(queryRun, cancellationToken);
@@ -61,6 +64,7 @@ namespace Tim.Backend.Providers.Query
         {
             try
             {
+                m_logger.Information($"Executing kusto query.", "DelayedQueryRunner-RunAndPersistQuery");
                 var queryResult = await m_queryClient.RunQuery(queryRun.KustoQuery, cancellationToken);
 
                 queryRun.Status = QueryRunStates.Completed;

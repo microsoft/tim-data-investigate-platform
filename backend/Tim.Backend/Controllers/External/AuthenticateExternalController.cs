@@ -63,7 +63,7 @@ namespace Tim.Backend.Controllers.External
                 });
             }
 
-            m_logger.Debug("Auth failed.");
+            m_logger.Information("Auth failed.", "AuthenticateExternalController-Authenticate");
 
             return Problem(statusCode: StatusCodes.Status401Unauthorized);
         }

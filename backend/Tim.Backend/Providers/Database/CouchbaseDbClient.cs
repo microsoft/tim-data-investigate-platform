@@ -25,6 +25,7 @@ namespace Tim.Backend.Providers.Database
         private const int c_retryMultipler = 500;
         private static readonly TimeSpan s_initializationTimeout = TimeSpan.FromMinutes(2);
         private static readonly TimeSpan s_queryTimeout = TimeSpan.FromSeconds(10);
+        private readonly ILogger m_logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CouchbaseDbClient"/> class.
@@ -32,7 +33,7 @@ namespace Tim.Backend.Providers.Database
         /// <param name="dbConfigs">Collection/table names.</param>
         public CouchbaseDbClient(DatabaseConfiguration dbConfigs)
         {
-            Logger = Log.Logger;
+            m_logger = Log.Logger;
             Configs = dbConfigs;
         }
 
@@ -52,24 +53,20 @@ namespace Tim.Backend.Providers.Database
         public IBucket Bucket { get; set; }
 
         /// <summary>
-        /// Gets the logger.
-        /// </summary>
-        protected ILogger Logger { get; }
-
-        /// <summary>
         /// Generate the collection name for this entity type.
         /// </summary>
         /// <typeparam name="T">Entity type.</typeparam>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
         public static string GetCollectionName<T>()
+            where T : IJsonEntity
         {
             return typeof(T).Name;
         }
 
         /// <inheritdoc/>
-        public async Task Connect()
+        public async Task ConnectAsync()
         {
-            Logger.Information($"CouchbaseDbClient is connecting to database.");
+            m_logger.Information($"CouchbaseDbClient is connecting to database.");
             CouchBaseClient = await Cluster.ConnectAsync(
                 Configs.DatabaseConnection,
                 new ClusterOptions
@@ -78,11 +75,11 @@ namespace Tim.Backend.Providers.Database
                     Password = Configs.DbUserPassword,
                     KvTimeout = s_queryTimeout,
                 });
-            Logger.Information($"CouchbaseDbClient has been created.");
+            m_logger.Information($"CouchbaseDbClient has been created.");
         }
 
         /// <inheritdoc/>
-        public async Task Initialize()
+        public async Task InitializeAsync()
         {
             if (CouchBaseClient is null)
             {
@@ -123,6 +120,7 @@ namespace Tim.Backend.Providers.Database
         }
 
         private async Task CreateCollectionIfNotExists<T>()
+            where T : IJsonEntity
         {
             if (Bucket is null)
             {
@@ -138,15 +136,17 @@ namespace Tim.Backend.Providers.Database
                 var retries = 0;
                 while (retries++ < 3)
                 {
+                    m_logger.Information($"Creating new collection {collectionName}.");
                     await Bucket.Collections.CreateCollectionAsync(collectionSpec);
                     await Task.Delay(TimeSpan.FromMilliseconds(retries * c_retryMultipler));
                 }
             }
             catch (CollectionExistsException)
             {
-                Logger.Information($"Collection {collectionName} already exists.");
+                m_logger.Information($"Collection {collectionName} already exists.");
             }
 
+            m_logger.Information($"Creating primary index for collection {collectionName}.");
             await CouchBaseClient.QueryIndexes.CreatePrimaryIndexAsync(
                 Bucket.Name,
                 new CreatePrimaryQueryIndexOptions()
@@ -165,6 +165,8 @@ namespace Tim.Backend.Providers.Database
             var buckets = await CouchBaseClient.Buckets.GetAllBucketsAsync();
             if (!buckets.ContainsKey(bucketName))
             {
+                m_logger.Information($"Creating bucket {bucketName}.");
+
                 // TODO: This should be configured by the couchbase server and not hard coded here
                 await CouchBaseClient.Buckets.CreateBucketAsync(new BucketSettings
                 {

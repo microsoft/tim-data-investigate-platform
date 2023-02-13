@@ -15,12 +15,12 @@ namespace Tim.Backend.Providers.Database
         /// Creates a connection to the database.
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task Connect();
+        Task ConnectAsync();
 
         /// <summary>
         /// Execute any initialize steps for the database.
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task Initialize();
+        Task InitializeAsync();
     }
 }
