@@ -21,9 +21,9 @@ namespace Tim.Backend.Controllers.External
     /// <summary>
     /// QueryExternalController saves and executes kusto queries.
     /// </summary>
-    [Route("/external/query")]
+    [Route("api/query")]
     [ApiController]
-    [Authorize]
+    [Authorize] 
     public class QueryExternalController : Controller
     {
         private const string c_defaultKustoScope = "https://help.kusto.windows.net/.default";

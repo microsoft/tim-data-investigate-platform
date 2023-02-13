@@ -1,22 +1,18 @@
 import Handlebars from 'handlebars';
+import runtimeConfig from '@/helpers/runtimeConfig';
 
-const lookupTableFunctions = `
-// --- LookupTableFunctions ---
+const getTagEvents = `
 let getTagEvents=(T:(EventId:string)) { 
   let EventIds=materialize(T | distinct EventId);
   let Events=EventIds
   | join kind=leftouter (
-    cluster('${import.meta.env.VITE_KUSTO_CLUSTER}').database('${
-  import.meta.env.VITE_KUSTO_DATABASE
-}').SavedEvent
+    cluster('${runtimeConfig.tagCluster}').database('${runtimeConfig.tagDatabase}').SavedEvent
     | where EventId in (EventIds)
     | summarize arg_max(DateTimeUtc, *) by EventId
     | project EventId, IsSaved=true
   ) on EventId
   | join kind=leftouter (
-    cluster('${import.meta.env.VITE_KUSTO_CLUSTER}').database('${
-  import.meta.env.VITE_KUSTO_DATABASE
-}').EventTag
+    cluster('${runtimeConfig.tagCluster}').database('${runtimeConfig.tagDatabase}').EventTag
     | where EventId in (EventIds)
     | summarize arg_max(DateTimeUtc, IsDeleted) by EventId, Tag
     | where not(IsDeleted)
@@ -24,9 +20,7 @@ let getTagEvents=(T:(EventId:string)) {
     | project EventId, Tags
   ) on EventId
   | join kind=leftouter (
-    cluster('${import.meta.env.VITE_KUSTO_CLUSTER}').database('${
-  import.meta.env.VITE_KUSTO_DATABASE
-}').EventComment
+    cluster('${runtimeConfig.tagCluster}').database('${runtimeConfig.tagDatabase}').EventComment
     | where EventId in (EventIds)
     | sort by DateTimeUtc desc
     | summarize arg_max(DateTimeUtc, Determination, IsDeleted, Comment), 
@@ -43,7 +37,7 @@ let getTagEvents=(T:(EventId:string)) {
   | project-away EventId1
 };
 `;
-Handlebars.registerPartial('lookupTableFunctions', lookupTableFunctions);
+Handlebars.registerPartial('getTagEvents', getTagEvents);
 Handlebars.registerHelper('array', (items) => items?.map((item) => `@'${item}'`).join(','));
 
 // eslint-disable-next-line import/prefer-default-export

@@ -77,13 +77,13 @@
         </template>
         <template v-slot:top>
           <v-switch
-            label="Show deleted"
             v-model="showDeleted"
+            label="Show deleted"
           >
           </v-switch>
           <v-text-field
-            prepend-inner-icon="mdi-magnify"
             v-model="search"
+            prepend-inner-icon="mdi-magnify"
             label="Filter"
             class="mx-4"
           ></v-text-field>

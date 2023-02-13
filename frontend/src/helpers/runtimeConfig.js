@@ -11,5 +11,7 @@ export default Object.freeze({
   wikiUri: import.meta.env.VITE_HELP_WIKI_URI || 'https://github.com/microsoft/tim-data-investigate-platform/wiki',
   issueUri: import.meta.env.VITE_HELP_ISSUE_URI || 'https://github.com/microsoft/tim-data-investigate-platform/issues/new?template=issue_template.md',
   nodeEnv: import.meta.env.NODE_ENV || 'production',
+  tagCluster: import.meta.env.TAG_CLUSTER,
+  tagDatabase: import.meta.env.TAG_DATABASE || 'Research',
   ...importConfig,
 });

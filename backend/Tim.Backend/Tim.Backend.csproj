@@ -58,10 +58,6 @@
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Tim.Common\Tim.Common.csproj" />
-    <ProjectReference Include="..\Tim.Flow\Tim.Flow.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Update="secrets.example.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>

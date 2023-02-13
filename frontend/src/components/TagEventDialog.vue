@@ -158,7 +158,6 @@
 import eventBus from '@/helpers/eventBus';
 import { createComments, createTags, saveEvents } from '@/helpers/apiClient';
 import {
-  presetTags,
   retrieveRecentTags,
   tagsDiff,
   tagsFromData,
@@ -202,7 +201,6 @@ export default {
           ...this.selectedTags,
           ...this.existingTags,
           ...this.recentTags,
-          ...presetTags(),
         ]),
       ];
     },

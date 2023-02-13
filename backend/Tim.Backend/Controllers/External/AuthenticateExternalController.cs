@@ -18,7 +18,7 @@ namespace Tim.Backend.Controllers.External
     /// <summary>
     /// AuthenticateExternalController authenticates the user and provides a JWT token.
     /// </summary>
-    [Route("/external/user")]
+    [Route("api/user")]
     [ApiController]
     [AllowAnonymous]
     public class AuthenticateExternalController : Controller

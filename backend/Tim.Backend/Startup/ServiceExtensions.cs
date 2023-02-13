@@ -31,7 +31,6 @@ namespace Tim.Backend.Startup
     using Tim.Backend.Providers.Kusto;
     using Tim.Backend.Startup;
     using Tim.Backend.Startup.Config;
-    using Tim.Common;
 
     /// <summary>
     /// Defines all the service extensions.
@@ -172,8 +171,6 @@ namespace Tim.Backend.Startup
             });
 
             services.AddPolicyRegistry();
-
-            services.AddSingleton<ISharedCache, InMemoryCache>();
         }
 
         /// <summary>
@@ -410,20 +407,14 @@ namespace Tim.Backend.Startup
 
             app.UseSwagger(c =>
             {
-                c.PreSerializeFilters.Add((swagger, httpReq) =>
-                {
-                    // Expose swagger on the request's originating port/host
-                    //  NOTE: in K8s, our Nginx ingress controller adds these headers
-                    var protocol = httpReq.Headers.TryGetHeaderValueWithDefault("X-Forwarded-Proto", httpReq.Scheme);
-                    var hostName = httpReq.Headers.TryGetHeaderValueWithDefault("X-Forwarded-Host", httpReq.Host.ToString());
-                    var serverUrl = $"{protocol}://{hostName}{serverConfigs.ApiBasePath}";
-
-                    // Servers property on swagger is required for certain scanners to work correctly.
-                    swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = serverUrl } };
-                });
+                c.RouteTemplate = serverConfigs.ApiBasePath + "/swagger/{documentName}/swagger.json";
             });
 
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint($"/{serverConfigs.ApiBasePath}/swagger/v1/swagger.json", "API");
+                c.RoutePrefix = $"{serverConfigs.ApiBasePath}/swagger";
+            });
         }
 
         private static string TryGetHeaderValueWithDefault(

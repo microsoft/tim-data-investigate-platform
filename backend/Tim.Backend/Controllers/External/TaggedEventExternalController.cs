@@ -17,7 +17,7 @@ namespace Tim.Backend.Controllers.External
     /// <summary>
     /// TaggedEventExternalControlle manages tagged event data.
     /// </summary>
-    [Route("/external/taggedevents")]
+    [Route("api/taggedevents")]
     [ApiController]
     [Authorize]
     public class TaggedEventExternalController : Controller

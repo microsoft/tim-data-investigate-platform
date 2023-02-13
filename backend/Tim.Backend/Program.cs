@@ -9,7 +9,6 @@ namespace TIM.Backend
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
     using Tim.Backend.Startup;
-    using Tim.Flow;
 
     /// <summary>
     /// Program class that starts the backend service.
@@ -37,8 +36,6 @@ namespace TIM.Backend
         /// <returns>Web host.</returns>
         public static IWebHost BuildWebHost(string[] args)
         {
-            Env.SetEnvironment(EnvironmentName == "Production" ? RuntimeEnvironment.PROD : RuntimeEnvironment.PPE);
-
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((config) =>
                 {
