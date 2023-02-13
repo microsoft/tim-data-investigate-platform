@@ -202,12 +202,12 @@
   </v-dialog>
 </template>
 <script>
-import MonacoEditor from 'vue-monaco';
 import yaml from 'js-yaml';
 import { queryCreate, queryUpdate } from '@/helpers/apiClient';
 import { mapActions } from 'vuex';
 import eventBus from '@/helpers/eventBus';
 import { generateUuidv4 } from '@/helpers/utils';
+import MonacoEditor from '@/components/MonacoEditor.vue';
 
 export default {
   name: 'CreateQueryDialog',
@@ -218,7 +218,7 @@ export default {
     dialog: Boolean,
     editQuery: {
       type: Object,
-      required: true,
+      default: null,
     },
   },
   data: () => ({

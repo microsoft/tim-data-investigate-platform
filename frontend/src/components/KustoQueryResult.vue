@@ -107,6 +107,7 @@
           resize: vertical;
           overflow: hidden;
         "
+        language="kusto"
         :options="options"
       />
     </v-form>
@@ -140,7 +141,7 @@ import {
 import KustoPivot from '@/components/grids/KustoPivot.vue';
 import NewQueryButton from '@/components/NewQueryButton.vue';
 import eventBus from '@/helpers/eventBus';
-import MonacoEditor from 'vue-monaco';
+import MonacoEditor from '@/components/MonacoEditor.vue';
 import TimeSelection from '@/components/TimeSelection.vue';
 import QueryHelperDialog from '@/components/QueryHelperDialog.vue';
 import ClusterSelection from '@/components/ClusterSelection.vue';
