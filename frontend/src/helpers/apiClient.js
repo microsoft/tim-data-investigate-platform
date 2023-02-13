@@ -2,8 +2,6 @@ import axios from 'axios';
 import auth from '@/helpers/auth';
 import runtimeConfig from '@/helpers/runtimeConfig';
 
-const endpointUri = runtimeConfig.apiEndpoint;
-
 export const queryCreate = async (query) => {
   const accessToken = await auth.getApiToken();
 
@@ -11,7 +9,7 @@ export const queryCreate = async (query) => {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  await axios.post(`${endpointUri}/external/templates/queries`, query, {
+  await axios.post(`${runtimeConfig.apiEndpoint}templates/queries`, query, {
     headers,
   });
 };
@@ -23,7 +21,7 @@ export const queryDelete = async (id) => {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  await axios.delete(`${endpointUri}/external/templates/queries/${id}`, {
+  await axios.delete(`${runtimeConfig.apiEndpoint}templates/queries/${id}`, {
     headers,
   });
 };
@@ -36,7 +34,7 @@ export const queryRestore = async (id) => {
   };
 
   await axios.patch(
-    `${endpointUri}/external/templates/queries/${id}`,
+    `${runtimeConfig.apiEndpoint}templates/queries/${id}`,
     [{ op: 'replace', path: '/isDeleted', value: false }],
     { headers },
   );
@@ -50,7 +48,7 @@ export const queryRetrieve = async () => {
   };
 
   const res = await axios.get(
-    `${endpointUri}/external/templates/queries?includeDeleted=true`,
+    `${runtimeConfig.apiEndpoint}templates/queries?includeDeleted=true`,
     { headers },
   );
   return res.data;
@@ -64,7 +62,7 @@ export const queryRetrieveById = async (id) => {
   };
 
   const res = await axios.get(
-    `${endpointUri}/external/templates/queries/${id}`,
+    `${runtimeConfig.apiEndpoint}templates/queries/${id}`,
     { headers },
   );
   return res.data;
@@ -77,7 +75,7 @@ export const queryUpdate = async (id, query) => {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  await axios.put(`${endpointUri}/external/templates/queries/${id}`, query, {
+  await axios.put(`${runtimeConfig.apiEndpoint}templates/queries/${id}`, query, {
     headers,
   });
 };
@@ -102,7 +100,7 @@ export const executeQuery = async (
     ...additionalParameters,
   };
 
-  return axios.post(`${endpointUri}/external/query/executeQuery`, body, {
+  return axios.post(`${runtimeConfig.apiEndpoint}query/executeQuery`, body, {
     headers,
   });
 };
@@ -115,7 +113,7 @@ export const getQueryResult = async (queryRunId) => {
   };
 
   return axios.get(
-    `${endpointUri}/external/query/getQueryResult?queryRunId=${queryRunId}`,
+    `${runtimeConfig.apiEndpoint}query/getQueryResult?queryRunId=${queryRunId}`,
     { headers },
   );
 };
@@ -139,7 +137,7 @@ export const saveEvents = async (events) => {
   }));
 
   const result = await axios.post(
-    `${endpointUri}/external/taggedevents/savedEvents`,
+    `${runtimeConfig.apiEndpoint}taggedevents/savedEvents`,
     data,
     { headers },
   );
@@ -168,7 +166,7 @@ export const createTags = async (tags) => {
   }));
 
   const result = await axios.post(
-    `${endpointUri}/external/taggedevents/tags`,
+    `${runtimeConfig.apiEndpoint}taggedevents/tags`,
     data,
     { headers },
   );
@@ -197,7 +195,7 @@ export const createComments = async (comments) => {
   }));
 
   const result = await axios.post(
-    `${endpointUri}/external/taggedevents/comments`,
+    `${runtimeConfig.apiEndpoint}taggedevents/comments`,
     data,
     { headers },
   );

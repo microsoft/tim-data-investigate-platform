@@ -48,7 +48,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend
           tags: |
-            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ jobs.release-please.outputs.frontend-tag }}
             type=sha
 
       - name: Build and push Docker image
@@ -65,7 +65,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend-enterprise
           tags: |
-            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ jobs.release-please.outputs.frontend-tag }}-enterprise
             type=sha
 
       - name: Build and push Docker image (enterprise)
@@ -75,7 +75,8 @@ jobs:
           push: true
           tags: ${{ steps.meta2.outputs.tags }}
           labels: ${{ steps.meta2.outputs.labels }}
-          build-args: enterprise
+          build-args:
+            - BUILD_VERSION=enterprise
 
   build-backend:
     runs-on: ubuntu-latest
@@ -100,7 +101,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
           tags: |
-            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ jobs.release-please.outputs.backend-tag }}
             type=sha
 
       - name: Build and push Docker image

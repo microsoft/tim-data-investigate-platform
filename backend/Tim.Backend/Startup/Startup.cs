@@ -10,7 +10,6 @@ namespace Tim.Backend.Startup
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Prometheus;
-    using Tim.Backend.Startup.Config;
 
     /// <summary>
     /// Services start up.
@@ -46,7 +45,6 @@ namespace Tim.Backend.Startup
         /// <param name="services">Current set up of services.</param>
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddEnvironmentInfo(Configuration);
             services.AddInstrumentationServices(Configuration, Environment.IsDevelopment());
             services.AddConfigurations(Configuration, Environment);
             services.AddMvc();

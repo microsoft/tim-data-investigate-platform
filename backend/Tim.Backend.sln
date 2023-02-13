@@ -15,10 +15,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Dockerfile = Dockerfile
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tim.Common", "Tim.Common\Tim.Common.csproj", "{C757D24B-B555-4A4C-91F2-C4A85E87CFE9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tim.Flow", "Tim.Flow\Tim.Flow.csproj", "{EA30C795-8829-48DE-AFD1-6D81B042CD1E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,14 +29,6 @@ Global
 		{551379AA-85EA-434C-B998-7BA719186D06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{551379AA-85EA-434C-B998-7BA719186D06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{551379AA-85EA-434C-B998-7BA719186D06}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C757D24B-B555-4A4C-91F2-C4A85E87CFE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C757D24B-B555-4A4C-91F2-C4A85E87CFE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C757D24B-B555-4A4C-91F2-C4A85E87CFE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C757D24B-B555-4A4C-91F2-C4A85E87CFE9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EA30C795-8829-48DE-AFD1-6D81B042CD1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EA30C795-8829-48DE-AFD1-6D81B042CD1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EA30C795-8829-48DE-AFD1-6D81B042CD1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EA30C795-8829-48DE-AFD1-6D81B042CD1E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

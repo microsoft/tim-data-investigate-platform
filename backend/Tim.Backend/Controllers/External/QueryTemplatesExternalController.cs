@@ -20,7 +20,7 @@ namespace Tim.Backend.Controllers.External
     /// <summary>
     /// API endpoints for working with query templates.
     /// </summary>
-    [Route("/external/templates/queries")]
+    [Route("api/templates/queries")]
     [ApiController]
     [Authorize]
     public class QueryTemplatesExternalController : ControllerBase

@@ -69,17 +69,18 @@ declare query_parameters(<strong>StartTime</strong>:datetime, <strong>EndTime</s
         </div>
         <v-card class="my-2 pa-2" outlined>
           <pre class="code">
+alias database Tags = cluster("{{ tagCluster }}").database("{{ tagDatabase }}");
 let getTagEvents=(T:(EventId:string)) {
   let EventIds=materialize(T | distinct EventId);
   let Events=EventIds
   | join kind=leftouter (
-    cluster('{{ defaultCluster }}').database('{{ defaultDatabase }}').SavedEvent
+    database("Tags").SavedEvent
     | where EventId in (EventIds)
     | summarize arg_max(DateTimeUtc, *) by EventId
     | project EventId, IsSaved=true
   ) on EventId
   | join kind=leftouter (
-    cluster('{{ defaultCluster }}').database('{{ defaultDatabase }}').EventTag
+    database("Tags").EventTag
     | where EventId in (EventIds)
     | summarize arg_max(DateTimeUtc, IsDeleted) by EventId, Tag
     | where not(IsDeleted)
@@ -87,9 +88,7 @@ let getTagEvents=(T:(EventId:string)) {
     | project EventId, Tags
   ) on EventId
   | join kind=leftouter (
-    cluster('{{ defaultCluster }}').database('{{
-              defaultDatabase
-            }}').EventComment
+    database("Tags").EventComment
     | where EventId in (EventIds)
     | sort by DateTimeUtc desc
     | summarize arg_max(DateTimeUtc, Determination, IsDeleted, Comment),
@@ -138,6 +137,7 @@ CreateFileEvents
 </template>
 <script>
 import { defaultNewQuery } from '@/helpers/displayComponent';
+import runtimeConfig from '@/helpers/runtimeConfig';
 
 export default {
   name: 'QueryHelperDialog',
@@ -148,11 +148,11 @@ export default {
     defaultNewQuery() {
       return defaultNewQuery();
     },
-    defaultCluster() {
-      return import.meta.env.VITE_KUSTO_CLUSTER;
+    tagCluster() {
+      return runtimeConfig.tagCluster;
     },
-    defaultDatabase() {
-      return import.meta.env.VITE_KUSTO_DATABASE;
+    tagDatabase() {
+      return runtimeConfig.tagDatabase;
     },
   },
 };

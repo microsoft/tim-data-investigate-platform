@@ -21,7 +21,7 @@ namespace Tim.Backend.Controllers.External
     /// <summary>
     /// QueryExternalController saves and executes kusto queries.
     /// </summary>
-    [Route("/external/query")]
+    [Route("api/query")]
     [ApiController]
     [Authorize]
     public class QueryExternalController : Controller

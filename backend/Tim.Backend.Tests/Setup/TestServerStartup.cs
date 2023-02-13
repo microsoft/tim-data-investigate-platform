@@ -8,7 +8,6 @@ namespace Tim.Backend.Tests.Setup
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Tim.Backend.Startup.Config;
-    using Tim.Common;
 
     /// <summary>
     /// Initializes the services and configuration needed for the test cases.
@@ -45,8 +44,6 @@ namespace Tim.Backend.Tests.Setup
             // Calling the AddConfigurations() extensions from the main service
             // Bind the configuration using IOptions to your concrete settings class
             services.Configure<KustoConfiguration>(Configuration.GetSection(nameof(KustoConfiguration)));
-
-            services.AddSingleton<ISharedCache, InMemoryCache>();
         }
     }
 }

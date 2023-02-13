@@ -1,6 +1,8 @@
 Dockerfile
-helm-values.yaml
+helm
 
 # Ignore build files
 **/[Bb]in/
 **/[Oo]bj/
+
+Tim.Backend.Tests

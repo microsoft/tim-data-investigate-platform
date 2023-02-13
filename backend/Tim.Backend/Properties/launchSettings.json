@@ -3,19 +3,28 @@
     "TIM.Backend": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "swagger",
+      "launchUrl": "api/swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "RedisString": "localhost",
-        "DbUserName": "Administrator",
-        "DbUserPassword": "password",
-        "REDIS_PASSWORD": "",
-        "KUSTO_URL": "",
-        "KUSTO_INGEST_URL": "",
-        "KUSTO_CLIENT_APP_ID": "",
         "SIGNING_KEY": "",
         "AUTH_USERNAME": "",
-        "AUTH_PASSWORD": ""
+        "AUTH_PASSWORD": "",
+        "AUTH_CLIENT_ID": "",
+        "AUTH_CLIENT_SECRET": "",
+        "AUTH_CLIENT_AUTHORITY": "",
+        "DB_CONNECT_STRING": "",
+        "DB_USER_NAME": "",
+        "DB_USER_PASSWORD": "",
+        "DATABASE_NAME": "",
+        "KUSTO_INGEST_URL": "",
+        "KUSTO_CLUSTER_URI": "",
+        "KUSTO_APP_KEY": "",
+        "KUSTO_CLIENT_APP_ID": "",
+        "KUSTO_CLIENT_APP_AUTHORITY": "",
+        "KUSTO_DATABASE_NAME": "",
+        "REDIS_HOSTS": "",
+        "REDIS_PASSWORD": "",
+        "API_BASE_PATH": ""
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }

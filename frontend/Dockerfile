@@ -19,11 +19,9 @@ RUN yarn build
 
 FROM build-${BUILD_VERSION} AS merge-build
 
-FROM node:16-alpine
+FROM nginx:stable-alpine
+
+COPY --from=merge-build /dist /usr/share/nginx/html
+
 EXPOSE 80
-RUN yarn global add serve
-
-WORKDIR /app
-COPY --from=merge-build /dist .
-
-ENTRYPOINT ["serve", "-l", "80"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

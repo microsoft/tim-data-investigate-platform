@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tim.Backend\Tim.Backend.csproj" />
-    <ProjectReference Include="..\Tim.Flow\Tim.Flow.csproj" />
   </ItemGroup>
 
   <ItemGroup>
