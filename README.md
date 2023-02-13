@@ -2,6 +2,35 @@
 
 TIM is a Kusto investigation platform that enables an analyst to quickly pivot between data sources; annotate their findings; and promotes collaboration through shared queries (pivots) and centralized tagged events.
 
+## Getting Started
+
+### Docker Compose
+
+Download the docker compose YAML file.
+```bash
+curl -LO https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/compose.yaml
+```
+
+Download and modify the frontend configuration file.
+```bash
+curl -L https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/config.js.example -o config.js
+```
+
+Download and modify the backend configuration env file.
+```bash
+curl -L https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/.env.example -o .env
+```
+
+Download and modify (if required) the NGINX configuration file.
+```bash
+curl -LO https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/nginx.conf
+```
+
+Run docker compose to download the latest images and deploy TIM locally.
+```bash
+docker compose up
+```
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
