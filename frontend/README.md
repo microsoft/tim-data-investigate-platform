@@ -1,4 +1,4 @@
-# investigate
+# Frontend
 
 ## Project setup
 ```
