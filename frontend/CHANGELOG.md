@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.3.0...frontend-v1.3.1) (2023-02-13)
+
+
+### Bug Fixes
+
+* fake fix to initiate rebuild. ([02637f0](https://github.com/microsoft/tim-data-investigate-platform/commit/02637f0cd3d4361d4a6b8e75f6b36870c89598b4))
+
 ## [1.3.0](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.2.0...frontend-v1.3.0) (2023-02-13)
 
 
