@@ -14,9 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       frontend-release: ${{ steps.release.outputs.frontend--release_created }}
-      frontend-tag: ${{ steps.release.outputs.frontend--tag_name }}
+      frontend-major: ${{ steps.release.outputs.frontend--major }}
+      frontend-minor: ${{ steps.release.outputs.frontend--minor }}
+      frontend-patch: ${{ steps.release.outputs.frontend--patch }}
       backend-release: ${{ steps.release.outputs.backend--release_created }}
-      backend-tag: ${{ steps.release.outputs.backend--tag_name }}
+      backend-major: ${{ steps.release.outputs.backend--major }}
+      backend-minor: ${{ steps.release.outputs.backend--minor }}
+      backend-patch: ${{ steps.release.outputs.backend--patch }}
       core-release: ${{ steps.release.outputs.releases_created }}
     steps:
       - uses: google-github-actions/release-please-action@v3
@@ -48,7 +52,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.frontend-tag }}
+            type=semver,pattern={{version}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
             type=sha
 
       - name: Build and push Docker image
@@ -65,7 +69,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend-enterprise
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.frontend-tag }}-enterprise
+            type=semver,pattern={{version}},value=v${{ needs.release-please.outputs.frontend-major }}.${{ needs.release-please.outputs.frontend-minor }}.${{ needs.release-please.outputs.frontend-patch }}
             type=sha
 
       - name: Build and push Docker image (enterprise)
@@ -101,7 +105,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.backend-tag }}
+            type=semver,pattern={{version}},value=v${{ needs.release-please.outputs.backend-major }}.${{ needs.release-please.outputs.backend-minor }}.${{ needs.release-please.outputs.backend-patch }}
             type=sha
 
       - name: Build and push Docker image
