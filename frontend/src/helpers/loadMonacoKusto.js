@@ -1,14 +1,5 @@
 // Original source code: https://github.com/grafana/grafana/pull/33528
 
-const scripts = [
-  [`${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/bridge.min.js`],
-  [
-    `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/kusto.javascript.client.min.js`,
-    `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/newtonsoft.json.min.js`,
-    `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/Kusto.Language.Bridge.min.js`,
-  ],
-];
-
 const loadMonacoKusto = () => new Promise((resolve) => {
   window.monacoKustoResolvePromise = resolve;
 
@@ -34,19 +25,16 @@ const loadScript = (script) => new Promise((resolve, reject) => {
 });
 
 const loadKusto = async () => {
-  const promise = Promise.resolve();
+  const scripts = [
+    `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/kusto.javascript.client.min.js`,
+    `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/newtonsoft.json.min.js`,
+    `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/Kusto.Language.Bridge.min.js`,
+  ];
 
-  for (const parallelScripts of scripts) {
-    await promise;
+  await loadScript(`${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/bridge.min.js`);
 
-    // Load all these scripts in parallel, then wait for them all to finish before continuing
-    // to the next iteration
-    const allPromises = parallelScripts
-      .filter((src) => !document.querySelector(`script[src="${src}"]`))
-      .map((src) => loadScript(src));
-
-    await Promise.all(allPromises);
-  }
+  const scriptPromises = scripts.map((script) => loadScript(script));
+  await Promise.all(scriptPromises);
 
   await loadMonacoKusto();
 };
