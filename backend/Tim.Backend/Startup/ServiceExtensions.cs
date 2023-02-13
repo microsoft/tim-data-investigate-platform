@@ -407,13 +407,13 @@ namespace Tim.Backend.Startup
 
             app.UseSwagger(c =>
             {
-                c.RouteTemplate = serverConfigs.ApiBasePath + "/swagger/{documentName}/swagger.json";
+                c.RouteTemplate = serverConfigs.ApiBasePath + "swagger/{documentName}/swagger.json";
             });
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint($"/{serverConfigs.ApiBasePath}/swagger/v1/swagger.json", "API");
-                c.RoutePrefix = $"{serverConfigs.ApiBasePath}/swagger";
+                c.SwaggerEndpoint($"/{serverConfigs.ApiBasePath}swagger/v1/swagger.json", "API");
+                c.RoutePrefix = $"{serverConfigs.ApiBasePath}swagger";
             });
         }
 

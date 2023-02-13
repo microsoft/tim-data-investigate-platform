@@ -4,7 +4,7 @@ window.appConfig = {
     authority: 'https://login.microsoftonline.com/[Tenant ID]',
   },
   redirectUri: 'https://tim.[your domain].tld/',
-  apiEndpoint: 'https://tim.[your domain].tld/api',
+  apiEndpoint: 'https://tim.[your domain].tld/api/',
   agGridLicenseKey: '[your aggrid license]',  // Only needed if using enterprise edition
   wikiUri: 'https://github.com/[your org]/[internal tim repo]/wiki',
   issueUri: 'https://github.com/[your org]/[internal tim repo]/issues/new?template=issue_template.md',

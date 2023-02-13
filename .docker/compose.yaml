@@ -1,0 +1,68 @@
+services:
+  frontend:
+    build: ../frontend
+    image: frontend-enterprise
+    ports:
+      - 80:80
+    networks:
+      - front-tier
+      - back-tier
+    volumes:
+      - ./config.js:/usr/share/nginx/html/config.js
+      - ./nginx.conf:/etc/nginx/nginx.conf
+
+  backend:
+    build: ../backend
+    restart: always
+    image: backend
+    depends_on:
+      - couchbase
+    ports:
+      - 8080:80
+    networks:
+      - back-tier
+    environment:
+      - SIGNING_KEY
+      - AUTH_USERNAME
+      - AUTH_PASSWORD
+      - AUTH_CLIENT_ID
+      - AUTH_CLIENT_SECRET
+      - AUTH_CLIENT_AUTHORITY
+      - DB_CONNECT_STRING
+      - DB_USER_NAME
+      - DB_USER_PASSWORD
+      - DATABASE_NAME
+      - KUSTO_INGEST_URL
+      - KUSTO_CLUSTER_URI
+      - KUSTO_APP_KEY
+      - KUSTO_CLIENT_APP_ID
+      - KUSTO_CLIENT_APP_AUTHORITY
+      - KUSTO_DATABASE_NAME
+      - REDIS_HOSTS
+      - REDIS_PASSWORD
+      - API_BASE_PATH
+
+  couchbase:
+    image: couchbase:community
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 6144M
+    networks:
+      - back-tier
+    ports:
+      - 8091-8096:8091-8096
+      - 11210-11211:11210-11211
+    volumes:
+      - ./db_data/couchbase_data:/opt/couchbase/var
+    tty: true
+
+volumes:
+  db-data:
+    driver: local
+
+networks:
+  # The presence of these objects is sufficient to define them
+  front-tier: {}
+  back-tier: {}
