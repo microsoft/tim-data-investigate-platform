@@ -1,7 +1,7 @@
 services:
   frontend:
     build: ../frontend
-    image: frontend-enterprise
+    image: frontend
     ports:
       - 80:80
     networks:
