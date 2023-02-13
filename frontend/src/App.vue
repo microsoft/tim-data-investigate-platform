@@ -42,7 +42,7 @@
 
           <v-list>
             <v-list-item
-              :href="`${githubBase}/wiki`"
+              :href="wikiUri"
               target="_blank"
             >
               <v-list-item-title>Wiki Page</v-list-item-title>
@@ -52,7 +52,7 @@
             </v-list-item>
 
             <v-list-item
-              :href="`${githubBase}/issues/new?template=issue_template.md`"
+              :href="issueUri"
               target="_blank"
             >
               <v-list-item-title>Report a bug</v-list-item-title>
@@ -150,6 +150,8 @@ import SideQueryTree from '@/components/SideQueryTree.vue';
 import { mapActions } from 'vuex';
 import DefaultSnackbar from '@/components/DefaultSnackbar.vue';
 import eventBus from '@/helpers/eventBus';
+import { BrowserAuthError } from '@azure/msal-browser';
+import runtimeConfig from '@/helpers/runtimeConfig';
 
 export default {
   name: 'App',
@@ -165,7 +167,12 @@ export default {
     logout: false,
   }),
   computed: {
-    githubBase: () => import.meta.env.VITE_GITHUB_BASE,
+    wikiUri() {
+      return runtimeConfig.wikiUri;
+    },
+    issueUri() {
+      return runtimeConfig.issueUri;
+    },
   },
   mounted() {
     this.runSetup();
@@ -183,8 +190,18 @@ export default {
       this.userId = null;
     },
     async signIn() {
-      await auth.login();
-      this.userId = auth.getUserId();
+      try {
+        await auth.login();
+        this.userId = auth.getUserId();
+      } catch (err) {
+        if (err instanceof BrowserAuthError && err.errorCode === 'interaction_in_progress') {
+          this.error = 'Authentication is in an abnormal state. Consider clearing the session and cookies to resolve this.';
+        } else {
+          this.error = err.toString();
+        }
+        console.error(err);
+        return false;
+      }
 
       if (!this.userId) {
         this.error = 'You must login to access TIM. Check that your browser allows pop-up windows for this site.';
