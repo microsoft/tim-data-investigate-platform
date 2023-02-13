@@ -1,7 +1,8 @@
 import axios from 'axios';
 import auth from '@/helpers/auth';
+import runtimeConfig from '@/helpers/runtimeConfig';
 
-const endpointUri = import.meta.env.VITE_API_ENDPOINT;
+const endpointUri = runtimeConfig.apiEndpoint;
 
 export const queryCreate = async (query) => {
   const accessToken = await auth.getApiToken();

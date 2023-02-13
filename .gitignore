@@ -351,3 +351,6 @@ MigrationBackup/
 
 # Chart dependencies
 **/charts/*.tgz
+
+# Jbrains
+.idea

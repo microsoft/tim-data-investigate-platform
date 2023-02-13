@@ -5,8 +5,9 @@ import App from '@/App.vue';
 import vuetify from '@/plugins/vuetify';
 import router from '@/router/index';
 import store from '@/store/index';
+/* LICENSE import runtimeConfig from '@/helpers/runtimeConfig'; */
 
-/* LICENSE LicenseManager.setLicenseKey(import.meta.env.VITE_AGGRID_LICENSE_KEY); */
+/* LICENSE LicenseManager.setLicenseKey(runtimeConfig.agGridLicenseKey); */
 
 Vue.config.productionTip = false;
 Vue.config.performance = true;

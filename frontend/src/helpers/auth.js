@@ -1,9 +1,10 @@
 import { PublicClientApplication, LogLevel } from '@azure/msal-browser';
+import runtimeConfig from '@/helpers/runtimeConfig';
 
 const msalConfig = {
   auth: {
-    clientId: import.meta.env.VITE_AUTH_CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AUTH_TENANT_ID}`,
+    clientId: runtimeConfig.auth.clientId,
+    authority: runtimeConfig.auth.authority,
   },
   cache: {
     cacheLocation: 'localStorage', // This configures where your cache will be stored
@@ -76,19 +77,13 @@ class AuthHandler {
   }
 
   async login() {
-    try {
-      if (!this.clientApplication.getActiveAccount()) {
-        const authResult = await this.clientApplication.loginPopup({
-          scopes: [`${import.meta.env.VITE_AUTH_CLIENT_ID}/.default`],
-          redirectUri: import.meta.env.VITE_AUTH_REDIRECT,
-          prompt: 'select_account',
-        });
-        this.handleResponse(authResult);
-      } else {
-        console.log(this.clientApplication.getActiveAccount());
-      }
-    } catch (error) {
-      console.error(error);
+    if (!this.clientApplication.getActiveAccount()) {
+      const authResult = await this.clientApplication.loginPopup({
+        scopes: [`${runtimeConfig.auth.clientId}/.default`],
+        redirectUri: runtimeConfig.redirectUri,
+        prompt: 'select_account',
+      });
+      this.handleResponse(authResult);
     }
   }
 
@@ -163,7 +158,7 @@ class AuthHandler {
 
   async getApiToken() {
     return this.getToken({
-      scopes: [`api://${import.meta.env.VITE_AUTH_CLIENT_ID}/user_impersonation`],
+      scopes: [`api://${runtimeConfig.auth.clientId}/user_impersonation`],
     });
   }
 }
