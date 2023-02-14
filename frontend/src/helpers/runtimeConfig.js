@@ -13,5 +13,12 @@ export default Object.freeze({
   nodeEnv: import.meta.env.NODE_ENV || 'production',
   tagCluster: import.meta.env.TAG_CLUSTER,
   tagDatabase: import.meta.env.TAG_DATABASE || 'Research',
+  defaultClusters: [
+    {
+      name: 'Example',
+      clusters: ['https://help.kusto.windows.net'],
+      databases: ['Samples'],
+    },
+  ],
   ...importConfig,
 });

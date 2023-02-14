@@ -322,22 +322,24 @@ export default {
         message: 'Quick saving comment...',
       });
 
-      const errors = await createComments([
-        {
-          eventId: event.data.EventId,
-          determination: event.data.TagEvent.Determination,
-          comment,
-        },
-      ]);
-
-      if (errors.length > 0) {
-        eventBus.$emit('show:snackbar', {
-          message: `Events failed to saved: ${[...new Set(errors)].toString()}`,
-          color: 'error',
-          icon: 'mdi-alert',
-        });
-        console.log(errors);
-        return;
+      try {
+        await createComments([
+          {
+            eventId: event.data.EventId,
+            determination: event.data.TagEvent.Determination,
+            comment,
+          },
+        ]);
+      } catch (err) {
+        if (err?.response?.status === 400) {
+          eventBus.$emit('show:snackbar', {
+            message: `Failed to saved events: ${err?.response?.data?.title}`,
+            color: 'error',
+            icon: 'mdi-alert',
+          });
+          throw err?.response?.data?.errors;
+        }
+        throw err;
       }
 
       eventBus.$emit('show:snackbar', {
@@ -454,17 +456,18 @@ export default {
             }));
 
           if (events.length > 0) {
-            const errors = await saveEvents(events);
-            if (errors.length > 0) {
-              eventBus.$emit('show:snackbar', {
-                message: `Events failed to saved: ${[
-                  ...new Set(errors),
-                ].toString()}`,
-                color: 'error',
-                icon: 'mdi-alert',
-              });
-              console.log(errors);
-              return;
+            try {
+              await saveEvents(events);
+            } catch (err) {
+              if (err?.response?.status === 400) {
+                eventBus.$emit('show:snackbar', {
+                  message: `Saving events failed: ${err?.response?.data?.title}`,
+                  color: 'error',
+                  icon: 'mdi-alert',
+                });
+                throw err?.response?.data?.errors;
+              }
+              throw err;
             }
           }
 
@@ -473,17 +476,18 @@ export default {
             eventId: data.EventId,
             determination: determination.toLowerCase(),
           }));
-          const errors = await createComments(comments);
-          if (errors.length > 0) {
-            eventBus.$emit('show:snackbar', {
-              message: `Events failed to saved: ${[
-                ...new Set(errors),
-              ].toString()}`,
-              color: 'error',
-              icon: 'mdi-alert',
-            });
-            console.log(errors);
-            return;
+          try {
+            await createComments(comments);
+          } catch (err) {
+            if (err?.response?.status === 400) {
+              eventBus.$emit('show:snackbar', {
+                message: `Saving comments failed: ${err?.response?.data?.title}`,
+                color: 'error',
+                icon: 'mdi-alert',
+              });
+              throw err?.response?.data?.errors;
+            }
+            throw err;
           }
 
           eventBus.$emit('show:snackbar', {

@@ -136,15 +136,11 @@ export const saveEvents = async (events) => {
     eventAsJson: event.data,
   }));
 
-  const result = await axios.post(
+  return axios.post(
     `${runtimeConfig.apiEndpoint}taggedevents/savedEvents`,
     data,
     { headers },
   );
-
-  return result.data
-    .filter((e) => e?.success !== true)
-    .map((e) => e?.error);
 };
 
 export const createTags = async (tags) => {
@@ -165,14 +161,11 @@ export const createTags = async (tags) => {
     isDeleted: tag.isDeleted,
   }));
 
-  const result = await axios.post(
+  return axios.post(
     `${runtimeConfig.apiEndpoint}taggedevents/tags`,
     data,
     { headers },
   );
-  return result.data
-    .filter((e) => e?.success !== true)
-    .map((e) => e?.error);
 };
 
 export const createComments = async (comments) => {
@@ -194,14 +187,11 @@ export const createComments = async (comments) => {
     isDeleted: comment.isDeleted,
   }));
 
-  const result = await axios.post(
+  return axios.post(
     `${runtimeConfig.apiEndpoint}taggedevents/comments`,
     data,
     { headers },
   );
-  return result.data
-    .filter((e) => e?.success !== true)
-    .map((e) => e?.error);
 };
 
 export const createSuppression = async () => 'TODO';

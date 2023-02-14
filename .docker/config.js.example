@@ -10,4 +10,11 @@ window.appConfig = {
   issueUri: 'https://github.com/[your org]/[internal tim repo]/issues/new?template=issue_template.md',
   tagCluster: 'https://[your kusto cluster].[region].kusto.windows.net',
   tagDatabase: 'Research',
+  defaultClusters: [
+    {
+      name: 'Example',
+      clusters: ['https://help.kusto.windows.net'],
+      databases: ['Samples'],
+    },
+  ],
 };

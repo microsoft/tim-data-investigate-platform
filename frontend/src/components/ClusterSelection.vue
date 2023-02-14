@@ -18,7 +18,8 @@
   </div>
 </template>
 <script>
-import clusterGroups from '@/config/kustoClusters';
+
+import runtimeConfig from '@/helpers/runtimeConfig';
 
 export default {
   name: 'ClusterSelection',
@@ -35,7 +36,7 @@ export default {
   computed: {
     getClusters() {
       const items = [];
-      clusterGroups.forEach((v) => {
+      runtimeConfig.defaultClusters.forEach((v) => {
         items.push({
           header: v.name,
         });
@@ -44,7 +45,7 @@ export default {
       return items;
     },
     getDatabases() {
-      return clusterGroups
+      return runtimeConfig.defaultClusters
         .find((clusterGroup) => clusterGroup.clusters.includes(this.cluster))
         ?.databases ?? [];
     },
