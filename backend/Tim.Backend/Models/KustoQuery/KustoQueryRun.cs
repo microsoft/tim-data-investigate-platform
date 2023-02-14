@@ -6,31 +6,37 @@ namespace Tim.Backend.Models.KustoQuery
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.Serialization;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
 
     /// <summary>
     /// Query Run states.
     /// </summary>
-    public enum QueryRunStates
+    public enum QueryRunStatus
     {
         /// <summary>
         /// Query first created.
         /// </summary>
+        [EnumMember(Value = "created")]
         Created,
 
         /// <summary>
         /// Query completed.
         /// </summary>
+        [EnumMember(Value = "completed")]
         Completed,
 
         /// <summary>
         /// Query had an error.
         /// </summary>
+        [EnumMember(Value = "error")]
         Error,
 
         /// <summary>
         /// Query timed out.
         /// </summary>
+        [EnumMember(Value = "timedOut")]
         TimedOut,
     }
 
@@ -48,7 +54,7 @@ namespace Tim.Backend.Models.KustoQuery
             KustoQuery = query;
             QueryRunId = Guid.NewGuid();
             ExecuteDateTimeUtc = DateTime.UtcNow;
-            Status = QueryRunStates.Created;
+            Status = QueryRunStatus.Created;
         }
 
         /// <summary>
@@ -83,7 +89,8 @@ namespace Tim.Backend.Models.KustoQuery
         /// Gets or sets the query run status.
         /// </summary>
         [JsonProperty("status")]
-        public QueryRunStates Status { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public QueryRunStatus Status { get; set; }
 
         /// <summary>
         /// Gets or sets the resulting data from the query.

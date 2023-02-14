@@ -5,11 +5,13 @@
 namespace Tim.Backend.Controllers.External
 {
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.IdentityModel.Tokens;
     using Tim.Backend.Models.TaggedEvents;
     using Tim.Backend.Models.TaggedEvents.Tables;
     using Tim.Backend.Providers.Kusto;
@@ -53,13 +55,13 @@ namespace Tim.Backend.Controllers.External
         /// <param name="cancellationToken">Cancellation Token.</param>
         /// <returns>Response of the request status.</returns>
         [HttpPost("savedEvents")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> CreateSavedEvent(
             [FromBody] IEnumerable<SavedEvent> requestArray,
             CancellationToken cancellationToken)
         {
-            return await EventCreation(requestArray, m_savedEventTable, cancellationToken);
+            return await EventCreation(requestArray.ToList(), m_savedEventTable, cancellationToken);
         }
 
         /// <summary>
@@ -69,13 +71,13 @@ namespace Tim.Backend.Controllers.External
         /// <param name="cancellationToken">Cancellation Token.</param>
         /// <returns>Response of the request status.</returns>
         [HttpPost("tags")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> CreateEventTag(
             [FromBody] IEnumerable<EventTag> requestArray,
             CancellationToken cancellationToken)
         {
-            return await EventCreation(requestArray, m_eventTagTable, cancellationToken);
+            return await EventCreation(requestArray.ToList(), m_eventTagTable, cancellationToken);
         }
 
         /// <summary>
@@ -85,37 +87,30 @@ namespace Tim.Backend.Controllers.External
         /// <param name="cancellationToken">Cancellation Token.</param>
         /// <returns>Response of the request status.</returns>
         [HttpPost("comments")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> CreateEventComment(
             [FromBody] IEnumerable<EventComment> requestArray,
             CancellationToken cancellationToken)
         {
-            return await EventCreation(requestArray, m_eventCommentTable, cancellationToken);
+            return await EventCreation(requestArray.ToList(), m_eventCommentTable, cancellationToken);
         }
 
-        private async Task<ActionResult> EventCreation(IEnumerable<IKustoEvent> requestArray, IKustoTable kustoTable, CancellationToken cancellationToken)
+        private async Task<ActionResult> EventCreation(IReadOnlyList<IKustoEvent> requestArray, IKustoTable kustoTable, CancellationToken cancellationToken)
         {
-            if (requestArray is null)
+            if (requestArray.IsNullOrEmpty())
             {
                 return BadRequest(ProblemDetailsFactory.CreateProblemDetails(
                     HttpContext,
                     statusCode: StatusCodes.Status400BadRequest,
-                    title: "Missing event request body."));
-            }
-
-            var validRequests = new List<IKustoEvent>();
-            foreach (var request in requestArray)
-            {
-                request.Validate();
-                validRequests.Add(request);
+                    title: "Either missing request body or request list is empty."));
             }
 
             await m_ingestClient.WriteAsync(
-                validRequests,
+                requestArray,
                 kustoTable,
                 cancellationToken);
-            return Ok();
+            return NoContent();
         }
     }
 }

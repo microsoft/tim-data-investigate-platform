@@ -5,6 +5,7 @@
 namespace Tim.Backend.Models.TaggedEvents
 {
     using System;
+    using System.ComponentModel.DataAnnotations;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -15,6 +16,7 @@ namespace Tim.Backend.Models.TaggedEvents
         /// <summary>
         /// Gets or sets the unique identifier associated with the saved event.
         /// </summary>
+        [Required]
         [JsonProperty("eventId")]
         public string EventId { get; set; }
 
@@ -27,6 +29,7 @@ namespace Tim.Backend.Models.TaggedEvents
         /// <summary>
         /// Gets or sets the user that made this request.
         /// </summary>
+        [Required]
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
@@ -39,6 +42,7 @@ namespace Tim.Backend.Models.TaggedEvents
         /// <summary>
         /// Gets or sets whether the associated saved event is considered malicious, suspicious etc.
         /// </summary>
+        [Required]
         [JsonProperty("determination")]
         public string Determination { get; set; }
 
@@ -47,27 +51,5 @@ namespace Tim.Backend.Models.TaggedEvents
         /// </summary>
         [JsonProperty("isDeleted")]
         public bool IsDeleted { get; set; }
-
-        /// <summary>
-        /// Validates the arguments in the request and throws an exception when error is found.
-        /// </summary>
-        /// <exception cref="ArgumentException">Throws if any argument is invalid.</exception>
-        public void Validate()
-        {
-            if (string.IsNullOrEmpty(EventId))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(EventId));
-            }
-
-            if (string.IsNullOrEmpty(CreatedBy))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(CreatedBy));
-            }
-
-            if (string.IsNullOrEmpty(Determination))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(Determination));
-            }
-        }
     }
 }

@@ -8,7 +8,9 @@ namespace Tim.Backend.Models.Templates
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
+    using System.Runtime.Serialization;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
 
     /// <summary>
     /// Defines query types.
@@ -18,11 +20,13 @@ namespace Tim.Backend.Models.Templates
         /// <summary>
         /// Kusto query view.
         /// </summary>
+        [EnumMember(Value = "view")]
         View,
 
         /// <summary>
         /// Kusto query.
         /// </summary>
+        [EnumMember(Value = "query")]
         Query,
     }
 
@@ -83,6 +87,7 @@ namespace Tim.Backend.Models.Templates
         /// </summary>
         [Required]
         [JsonProperty("queryType")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public QueryType QueryType { get; set; }
 
         /// <summary>

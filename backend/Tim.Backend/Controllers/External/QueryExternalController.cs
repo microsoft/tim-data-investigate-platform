@@ -54,6 +54,7 @@ namespace Tim.Backend.Controllers.External
         /// <returns>A query run quid to track status of query.</returns>
         [HttpPost("executeQuery")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -72,7 +73,7 @@ namespace Tim.Backend.Controllers.External
                 var delayQueryRunner = new DelayedQueryRunner(kustoClient, m_dbRepository);
                 var queryRun = await delayQueryRunner.DelayRun(queryRequest, cancellationToken);
 
-                return queryRun;
+                return queryRun.Status == QueryRunStatus.Created ? Accepted(queryRun) : Ok(queryRun);
             }
             catch (Exception ex)
             {
@@ -89,15 +90,15 @@ namespace Tim.Backend.Controllers.External
         /// <returns>Query results when ready.</returns>
         [HttpGet("getQueryResult")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<KustoQueryRun>> CheckQueryStatus(string queryRunId, CancellationToken cancellationToken)
         {
             var queryRun = await m_dbRepository.GetItemAsync(queryRunId);
 
-            return queryRun == null ? NotFound() : Ok(queryRun);
+            return queryRun == null ? NotFound() : queryRun.Status == QueryRunStatus.Created ? Accepted(queryRun) : Ok(queryRun);
         }
 
         private async Task<KustoQueryClient> GetOBOKustoClient(KustoQuery queryRequest, string accessToken)

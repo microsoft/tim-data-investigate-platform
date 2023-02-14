@@ -168,13 +168,15 @@ namespace Tim.Backend.Providers.Database
                 m_logger.Information($"Creating bucket {bucketName}.");
 
                 // TODO: This should be configured by the couchbase server and not hard coded here
-                await CouchBaseClient.Buckets.CreateBucketAsync(new BucketSettings
-                {
-                    BucketType = BucketType.Couchbase,
-                    Name = bucketName,
-                    NumReplicas = 0,
-                    RamQuotaMB = 100,
-                });
+                await CouchBaseClient.Buckets.CreateBucketAsync(
+                    new BucketSettings
+                    {
+                        BucketType = BucketType.Couchbase,
+                        Name = bucketName,
+                        NumReplicas = 0,
+                        RamQuotaMB = 100,
+                    },
+                    new CreateBucketOptions().Timeout(s_initializationTimeout));
             }
 
             var bucket = await CouchBaseClient.BucketAsync(bucketName);
