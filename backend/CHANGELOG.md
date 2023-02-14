@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.2](https://github.com/microsoft/tim-data-investigate-platform/compare/backend-v1.1.1...backend-v1.1.2) (2023-02-14)
+
+
+### Bug Fixes
+
+* enum conversion on query run status. ([adbc273](https://github.com/microsoft/tim-data-investigate-platform/commit/adbc273806b9ea115ccdf4e125cee79a4c271f74))
+* increase timeout for initializing couchbase db. ([#15](https://github.com/microsoft/tim-data-investigate-platform/issues/15)) ([adbc273](https://github.com/microsoft/tim-data-investigate-platform/commit/adbc273806b9ea115ccdf4e125cee79a4c271f74))
+* proper model validation instead of 500 exceptions. ([adbc273](https://github.com/microsoft/tim-data-investigate-platform/commit/adbc273806b9ea115ccdf4e125cee79a4c271f74))
+* return correct status for execute query and get results. ([adbc273](https://github.com/microsoft/tim-data-investigate-platform/commit/adbc273806b9ea115ccdf4e125cee79a4c271f74))
+
 ## [1.1.1](https://github.com/microsoft/tim-data-investigate-platform/compare/backend-v1.1.0...backend-v1.1.1) (2023-02-13)
 
 
