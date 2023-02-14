@@ -17,6 +17,7 @@ namespace Tim.Backend.Providers.Query
     public class DelayedQueryRunner
     {
         private static readonly TimeSpan s_expireTimeSpan = TimeSpan.FromDays(1);
+        private static readonly TimeSpan s_immediateResponseWait = TimeSpan.FromSeconds(1);
         private readonly IKustoQueryClient m_queryClient;
         private readonly IDatabaseRepository<KustoQueryRun> m_databaseRepo;
         private readonly ILogger m_logger;
@@ -47,7 +48,7 @@ namespace Tim.Backend.Providers.Query
             await m_databaseRepo.AddOrUpdateItemAsync(queryRun, s_expireTimeSpan);
 
             var runQueryTask = RunAndPersistQuery(queryRun, cancellationToken);
-            var timeoutTask = Task.Delay(1000, cancellationToken);
+            var timeoutTask = Task.Delay(s_immediateResponseWait, cancellationToken);
 
             var resultTask = await Task.WhenAny(runQueryTask, timeoutTask).ConfigureAwait(false);
 
@@ -67,14 +68,14 @@ namespace Tim.Backend.Providers.Query
                 m_logger.Information($"Executing kusto query.", "DelayedQueryRunner-RunAndPersistQuery");
                 var queryResult = await m_queryClient.RunQuery(queryRun.KustoQuery, cancellationToken);
 
-                queryRun.Status = QueryRunStates.Completed;
+                queryRun.Status = QueryRunStatus.Completed;
                 queryRun.ResultData = queryResult.QueryResults;
                 queryRun.ExecutionMetrics = queryResult.QueryStats;
                 await m_databaseRepo.AddOrUpdateItemAsync(queryRun);
             }
             catch (Exception ex)
             {
-                queryRun.Status = QueryRunStates.Error;
+                queryRun.Status = QueryRunStatus.Error;
                 queryRun.MainError = ex.Message;
                 queryRun.StackTrace = ex.StackTrace;
                 await m_databaseRepo.AddOrUpdateItemAsync(queryRun);

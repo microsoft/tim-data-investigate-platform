@@ -5,6 +5,7 @@
 namespace Tim.Backend.Models.TaggedEvents
 {
     using System;
+    using System.ComponentModel.DataAnnotations;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -15,6 +16,7 @@ namespace Tim.Backend.Models.TaggedEvents
         /// <summary>
         /// Gets or sets the unique identifier associated with the saved event.
         /// </summary>
+        [Required]
         [JsonProperty("eventId")]
         public string EventId { get; set; }
 
@@ -27,12 +29,14 @@ namespace Tim.Backend.Models.TaggedEvents
         /// <summary>
         /// Gets or sets the user that made this request.
         /// </summary>
+        [Required]
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
         /// <summary>
         /// Gets or sets the tag to that will be attached to the related saved event.
         /// </summary>
+        [Required]
         [JsonProperty("tag")]
         public string Tag { get; set; }
 
@@ -41,24 +45,5 @@ namespace Tim.Backend.Models.TaggedEvents
         /// </summary>
         [JsonProperty("isDeleted")]
         public bool IsDeleted { get; set; }
-
-        /// <inheritdoc/>
-        public void Validate()
-        {
-            if (string.IsNullOrEmpty(EventId))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(EventId));
-            }
-
-            if (string.IsNullOrEmpty(CreatedBy))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(CreatedBy));
-            }
-
-            if (string.IsNullOrEmpty(Tag))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(Tag));
-            }
-        }
     }
 }

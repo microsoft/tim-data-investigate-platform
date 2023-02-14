@@ -6,6 +6,7 @@ namespace Tim.Backend.Models.TaggedEvents
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -16,12 +17,14 @@ namespace Tim.Backend.Models.TaggedEvents
         /// <summary>
         /// Gets or sets the primary identifier specific to this event e.g. ReportGuid.
         /// </summary>
+        [Required]
         [JsonProperty("eventId")]
         public string EventId { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp associated with this event e.g. ReportTime.
         /// </summary>
+        [Required]
         [JsonProperty("eventTime")]
         public DateTime? EventTime { get; set; }
 
@@ -29,45 +32,20 @@ namespace Tim.Backend.Models.TaggedEvents
         /// Gets or sets when this saved event was created.
         /// </summary>
         [JsonProperty("dateTimeUtc")]
-        public DateTime? DateTimeUtc { get; set; }
+        public DateTime? DateTimeUtc { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Gets or sets the user that created this saved event.
         /// </summary>
+        [Required]
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
         /// <summary>
         /// Gets or sets a complex object that holds all the raw data for this event.
         /// </summary>
+        [Required]
         [JsonProperty("eventAsJson")]
         public Dictionary<string, object> EventAsJson { get; set; }
-
-        /// <summary>
-        /// Validates the arguments in the request and throws an exception when error is found.
-        /// </summary>
-        /// <exception cref="ArgumentException">Throws if any argument is invalid.</exception>
-        public void Validate()
-        {
-            if (string.IsNullOrEmpty(EventId))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(EventId));
-            }
-
-            if (EventTime == default)
-            {
-                throw new ArgumentException("Argument must be specified", nameof(EventTime));
-            }
-
-            if (string.IsNullOrEmpty(CreatedBy))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(CreatedBy));
-            }
-
-            if (EventAsJson == null || EventAsJson.Count == 0)
-            {
-                throw new ArgumentException("Argument must be specified", nameof(EventAsJson));
-            }
-        }
     }
 }
