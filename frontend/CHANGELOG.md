@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.2](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.3.1...frontend-v1.3.2) (2023-02-14)
+
+
+### Bug Fixes
+
+* match backend API changes. ([#14](https://github.com/microsoft/tim-data-investigate-platform/issues/14)) ([e1c68a4](https://github.com/microsoft/tim-data-investigate-platform/commit/e1c68a4a0e3e0c221d601325e185bf0895131fc1))
+* move cluster groups into runtime config. ([e1c68a4](https://github.com/microsoft/tim-data-investigate-platform/commit/e1c68a4a0e3e0c221d601325e185bf0895131fc1))
+
 ## [1.3.1](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.3.0...frontend-v1.3.1) (2023-02-13)
 
 
