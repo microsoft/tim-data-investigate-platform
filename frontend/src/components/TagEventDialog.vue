@@ -370,41 +370,45 @@ export default {
     async removeDetermination() {
       console.log('Removing tag events...');
 
+      eventBus.$emit('show:snackbar', {
+        message: 'Removing tag events...',
+      });
+
+      const comments = [];
+      const newEvents = this.events.map((data) => {
+        comments.push({
+          eventId: data.EventId,
+          comment: 'removed',
+          determination: 'removed',
+          isDeleted: true,
+        });
+        return {
+          ...data,
+          TagEvent: null,
+        };
+      });
       try {
-        eventBus.$emit('show:snackbar', {
-          message: 'Removing tag events...',
-        });
-
-        const comments = [];
-        const newEvents = this.events.map((data) => {
-          comments.push({
-            eventId: data.EventId,
-            comment: 'removed',
-            determination: 'removed',
-            isDeleted: true,
-          });
-          return {
-            ...data,
-            TagEvent: null,
-          };
-        });
         await createComments(comments);
-        this.events = newEvents;
-        this.onSuccess(this.events);
-
-        eventBus.$emit('show:snackbar', {
-          message: 'Tag events successfully removed.',
-          color: 'success',
-          icon: 'mdi-check',
-        });
       } catch (err) {
-        eventBus.$emit('show:snackbar', {
-          message: `Removing tag events failed: ${err.toString()}`,
-          color: 'error',
-          icon: 'mdi-alert',
-        });
-        console.log(err);
+        if (err?.response?.status === 400) {
+          eventBus.$emit('show:snackbar', {
+            message: `Removing tag events failed: ${err?.response?.data?.title}`,
+            color: 'error',
+            icon: 'mdi-alert',
+          });
+          throw err?.response?.data?.errors;
+        }
+        throw err;
       }
+
+      this.events = newEvents;
+      this.onSuccess(this.events);
+
+      eventBus.$emit('show:snackbar', {
+        message: 'Tag events successfully removed.',
+        color: 'success',
+        icon: 'mdi-check',
+      });
 
       this.dialog = false;
     },

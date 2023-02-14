@@ -11,6 +11,25 @@ export const formatCluster = (cluster) => {
   return clusterFormatted;
 };
 
+const handleResult = (result) => {
+  if (result.status !== 200) {
+    throw new Error(`Unexpected status code ${result.status}.`);
+  }
+
+  if (result.data?.status === 'completed') {
+    return {
+      queryInfo: result.data.executionMetrics,
+      data: result.data?.resultData || [],
+    };
+  }
+
+  if (result.data?.status === 'error') {
+    throw result?.data?.mainError;
+  }
+
+  throw new Error(`Unexpected status ${result.data?.status}`);
+};
+
 const maxPollTimeout = 11 * 60 * 1000;
 const retriesBackOff = 2;
 const startBackOff = 500;
@@ -37,16 +56,10 @@ export const runKustoQueryPoll = async (
       additionalParameters,
     );
 
-    // Return if we got an immediate result
-    if (result.status === 200) {
-      return {
-        queryInfo: result.data?.executionMetrics,
-        data: result.data?.resultData || [],
-      };
-    }
-
     if (result.status === 202) {
       queryRunId = result.data?.queryRunId;
+    } else if (result.status === 200) {
+      return handleResult(result);
     }
   } catch (err) {
     if (err?.response?.status === 400) {
@@ -69,10 +82,7 @@ export const runKustoQueryPoll = async (
       const result = await getQueryResult(queryRunId);
 
       if (result.status === 200) {
-        return {
-          queryInfo: result.data.executionMetrics,
-          data: result.data?.resultData || [],
-        };
+        return handleResult(result);
       }
     } catch (err) {
       if (err?.response?.status === 400) {
