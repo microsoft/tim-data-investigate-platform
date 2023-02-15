@@ -5,7 +5,7 @@
 
 ### ⚠ BREAKING CHANGES
 
-* add get kusto schema.
+* modified the API for kusto queries.
 
 ### Features
 
