@@ -1,5 +1,7 @@
 // Original source code: https://github.com/grafana/grafana/pull/33528
 
+let promise = null;
+
 const loadMonacoKusto = () => new Promise((resolve) => {
   window.monacoKustoResolvePromise = resolve;
 
@@ -24,7 +26,7 @@ const loadScript = (script) => new Promise((resolve, reject) => {
   document.body.appendChild(scriptEl);
 });
 
-const loadKusto = async () => {
+const loadScripts = async () => {
   const scripts = [
     `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/kusto.javascript.client.min.js`,
     `${import.meta.env.BASE_URL}monaco-editor/min/vs/language/kusto/newtonsoft.json.min.js`,
@@ -37,6 +39,13 @@ const loadKusto = async () => {
   await Promise.all(scriptPromises);
 
   await loadMonacoKusto();
+};
+
+const loadKusto = async () => {
+  if (promise === null) {
+    promise = loadScripts();
+  }
+  return promise;
 };
 
 export default loadKusto;

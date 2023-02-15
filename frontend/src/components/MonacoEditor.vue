@@ -3,10 +3,9 @@
 </template>
 <script>
 import loader from '@monaco-editor/loader';
-import loadMonacoKusto from '@/helpers/loadMonacoKusto';
 
 export default {
-  name: 'Editor',
+  name: 'MonacoEditor',
   model: {
     event: 'change',
   },
@@ -46,7 +45,6 @@ export default {
       });
 
       const monaco = await loader.init();
-      await loadMonacoKusto();
 
       this.editor = monaco.editor.create(
         this.$el,

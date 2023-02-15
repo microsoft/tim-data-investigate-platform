@@ -100,7 +100,7 @@ export const executeQuery = async (
     ...additionalParameters,
   };
 
-  return axios.post(`${runtimeConfig.apiEndpoint}query/executeQuery`, body, {
+  return axios.post(`${runtimeConfig.apiEndpoint}kusto/query`, body, {
     headers,
   });
 };
@@ -113,9 +113,29 @@ export const getQueryResult = async (queryRunId) => {
   };
 
   return axios.get(
-    `${runtimeConfig.apiEndpoint}query/getQueryResult?queryRunId=${queryRunId}`,
+    `${runtimeConfig.apiEndpoint}kusto/query/${queryRunId}`,
     { headers },
   );
+};
+
+export const getKustoSchema = async (
+  cluster,
+  database,
+) => {
+  const accessToken = await auth.getApiToken();
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const body = {
+    cluster,
+    database,
+  };
+
+  return axios.post(`${runtimeConfig.apiEndpoint}kusto/schema`, body, {
+    headers,
+  });
 };
 
 export const saveEvents = async (events) => {
