@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/microsoft/tim-data-investigate-platform/compare/backend-v1.1.2...backend-v2.0.0) (2023-02-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* modified the API for kusto queries.
+
+### Features
+
+* add get kusto schema. ([8ba47f7](https://github.com/microsoft/tim-data-investigate-platform/commit/8ba47f7880cb624457f6170e636958df0c4dc12e))
+
+
+### Bug Fixes
+
+* validation of cluster uri with https. ([#17](https://github.com/microsoft/tim-data-investigate-platform/issues/17)) ([8ba47f7](https://github.com/microsoft/tim-data-investigate-platform/commit/8ba47f7880cb624457f6170e636958df0c4dc12e))
+
 ## [1.1.2](https://github.com/microsoft/tim-data-investigate-platform/compare/backend-v1.1.1...backend-v1.1.2) (2023-02-14)
 
 
