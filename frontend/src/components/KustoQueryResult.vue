@@ -97,7 +97,7 @@
           <v-icon>mdi-help-circle-outline</v-icon>
         </v-btn>
       </p>
-      <MonacoEditor
+      <KustoMonacoEditor
         v-model="editParams.query"
         style="
           width: 100%;
@@ -107,7 +107,8 @@
           resize: vertical;
           overflow: hidden;
         "
-        language="kusto"
+        :cluster="editParams.cluster"
+        :database="editParams.database"
         :options="options"
       />
     </v-form>
@@ -141,7 +142,7 @@ import {
 import KustoPivot from '@/components/grids/KustoPivot.vue';
 import NewQueryButton from '@/components/NewQueryButton.vue';
 import eventBus from '@/helpers/eventBus';
-import MonacoEditor from '@/components/MonacoEditor.vue';
+import KustoMonacoEditor from '@/components/KustoMonacoEditor.vue';
 import TimeSelection from '@/components/TimeSelection.vue';
 import QueryHelperDialog from '@/components/QueryHelperDialog.vue';
 import ClusterSelection from '@/components/ClusterSelection.vue';
@@ -154,7 +155,7 @@ export default {
     TimeSelection,
     NewQueryButton,
     KustoPivot,
-    MonacoEditor,
+    KustoMonacoEditor,
   },
   props: {
     uuid: {
