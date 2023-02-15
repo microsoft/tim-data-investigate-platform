@@ -5,14 +5,15 @@
 namespace Tim.Backend.Models.KustoQuery
 {
     using System;
-
+    using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using Newtonsoft.Json;
 
     /// <summary>
     /// Request to execute kusto query.
     /// </summary>
     [JsonObject]
-    public sealed class KustoQuery
+    public sealed class KustoQuery : KustoClusterDatabase, IValidatableObject
     {
         /// <summary>
         /// Gets or sets the authenticated user making the request.
@@ -33,59 +34,20 @@ namespace Tim.Backend.Models.KustoQuery
         public DateTime EndTime { get; set; }
 
         /// <summary>
-        /// Gets or sets the cluster the query will be executed in.
-        /// </summary>
-        [JsonProperty("cluster")]
-        public string Cluster { get; set; }
-
-        /// <summary>
-        /// Gets or sets the database the query will be executed in.
-        /// </summary>
-        [JsonProperty("database")]
-        public string Database { get; set; }
-
-        /// <summary>
         /// Gets or sets the query.
         /// </summary>
+        [Required]
         [JsonProperty("query")]
         public string QueryText { get; set; }
 
-        /// <summary>
-        /// Validates the arguments in the request and throws an exception when error is found.
-        /// </summary>
-        /// <exception cref="ArgumentException">Throws if any argument is invalid.</exception>
-        public void Validate()
+        /// <inheritdoc/>
+        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (string.IsNullOrEmpty(QueryText))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(QueryText));
-            }
-
-            if (string.IsNullOrEmpty(RequestedBy))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(RequestedBy));
-            }
-
-            if (string.IsNullOrEmpty(QueryText))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(Cluster));
-            }
-
-            if (string.IsNullOrEmpty(QueryText))
-            {
-                throw new ArgumentException("Argument must be specified", nameof(Database));
-            }
+            base.Validate(validationContext);
 
             if (StartTime > EndTime)
             {
-                throw new ArgumentException("End Time has to be greater then start time to execute query");
-            }
-
-            // this string should bew able to be parsed into a URI
-            var isUri = Uri.IsWellFormedUriString(Cluster, UriKind.RelativeOrAbsolute);
-            if (!isUri)
-            {
-                throw new ArgumentException("Cluster needs to be a URI. ", nameof(Cluster));
+                yield return new ValidationResult("EndTime must be greater than StartTime.");
             }
         }
     }

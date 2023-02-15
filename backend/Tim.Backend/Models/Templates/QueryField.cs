@@ -32,11 +32,7 @@ namespace Tim.Backend.Models.Templates
         [JsonProperty("regex")]
         public string Regex { get; set; }
 
-        /// <summary>
-        /// Validate that all required fields are present as expected.
-        /// </summary>
-        /// <param name="validationContext">validation context.</param>
-        /// <returns>Any located errors.</returns>
+        /// <inheritdoc/>
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             if (Type == "multiple" && string.IsNullOrWhiteSpace(From))
