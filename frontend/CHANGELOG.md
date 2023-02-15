@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.3.2...frontend-v1.4.0) (2023-02-15)
+
+
+### Features
+
+* support for schema autocomplete for queries. ([#18](https://github.com/microsoft/tim-data-investigate-platform/issues/18)) ([b5a9121](https://github.com/microsoft/tim-data-investigate-platform/commit/b5a9121f98bb33112726cb93d7d8f848ec02fb9c))
+
+
+### Bug Fixes
+
+* load monaco kusto once. ([b5a9121](https://github.com/microsoft/tim-data-investigate-platform/commit/b5a9121f98bb33112726cb93d7d8f848ec02fb9c))
+* split kusto monaco and others. ([b5a9121](https://github.com/microsoft/tim-data-investigate-platform/commit/b5a9121f98bb33112726cb93d7d8f848ec02fb9c))
+
 ## [1.3.2](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.3.1...frontend-v1.3.2) (2023-02-14)
 
 
