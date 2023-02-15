@@ -25,32 +25,52 @@ namespace Tim.Backend.Providers.Kusto
     /// </summary>
     public class KustoQueryClient : IKustoQueryClient
     {
-        private readonly IKustoStatelessClient m_client;
+        private readonly ICslQueryProvider m_client;
+        private readonly ICslAdminProvider m_commandClient;
         private readonly ILogger m_logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="KustoQueryClient"/> class.
         /// </summary>
-        /// <param name="client">Kusto client.</param>
-        public KustoQueryClient(IKustoStatelessClient client)
+        public KustoQueryClient()
         {
             m_logger = Log.Logger;
-            m_client = client;
         }
 
         /// <summary>
-        /// Create kusto client using user token.
+        /// Initializes a new instance of the <see cref="KustoQueryClient"/> class.
         /// </summary>
-        /// <param name="token">User bearer token.</param>
-        /// <param name="clusterUrl">Cluster url the query will be run on top of.</param>
-        /// <param name="databaseName">Database the query will be run on top of.</param>
-        /// <returns>Kusto Query Client ready to execute query.</returns>
-        public static KustoQueryClient WithUserToken(string token, string clusterUrl, string databaseName)
+        /// <param name="client">Kusto client.</param>
+        /// <param name="commandClient">Kusto command client.</param>
+        public KustoQueryClient(ICslQueryProvider client, ICslAdminProvider commandClient = null)
+            : this()
         {
-            var builder = new KustoConnectionStringBuilder(clusterUrl, databaseName)
-                .WithAadUserTokenAuthentication(token);
-            var client = KustoClientFactory.CreateCslQueryProvider(builder) as IKustoStatelessClient;
-            return new KustoQueryClient(client);
+            m_client = client;
+            m_commandClient = commandClient;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="KustoQueryClient"/> class.
+        /// </summary>
+        /// <param name="builder">Kusto string builder.</param>
+        public KustoQueryClient(KustoConnectionStringBuilder builder)
+            : this()
+        {
+            m_client = KustoClientFactory.CreateCslQueryProvider(builder);
+            m_commandClient = KustoClientFactory.CreateCslAdminProvider(builder);
+        }
+
+        /// <summary>
+        /// Retrieve the cluster schema.
+        /// </summary>
+        /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
+        public async Task<object> ShowClusterSchemaAsync()
+        {
+            m_logger.Information("Executing show schema command.");
+            var result = await m_commandClient.ExecuteControlCommandAsync(
+                m_commandClient.DefaultDatabaseName,
+                ".show schema as json");
+            return CreateUntypedResultsFromTable(result);
         }
 
         /// <summary>
@@ -105,7 +125,7 @@ namespace Tim.Backend.Providers.Kusto
         public async Task<KustoQueryResults<IDictionary<string, object>>> RunQuery(KustoQuery query, CancellationToken cancellationToken)
         {
             m_logger.Information($"Executing kusto query on cluster {query.Cluster}.", "KustoQueryClient-RunQuery");
-            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.QueryText, new ClientRequestProperties(), cancellationToken);
+            var dataSet = await m_client.ExecuteQueryV2Async(query.Database, query.QueryText, new ClientRequestProperties());
             var queryResults = new List<IDictionary<string, object>>();
             KustoQueryStats queryStats = null;
             var frames = dataSet.GetFrames();
@@ -160,7 +180,7 @@ namespace Tim.Backend.Providers.Kusto
             }
 
             m_logger.Information($"Executing query using Kusto's ExecuteQueryV2Async. Client Request Id: {clientRequestProperties.ClientRequestId} ", "KustoQueryClient-ExecuteQueryAsync");
-            var dataSet = await m_client.ExecuteQueryV2Async(query.Cluster, query.Database, query.QueryText, clientRequestProperties);
+            var dataSet = await m_client.ExecuteQueryV2Async(query.Database, query.QueryText, clientRequestProperties);
             m_logger.Information($"Query completed. Client Request Id: {clientRequestProperties.ClientRequestId} ", "KustoQueryClient-ExecuteQueryAsync");
             return dataSet.GetFrames();
         }
