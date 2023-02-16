@@ -4,6 +4,7 @@
 
 namespace Tim.Backend.Providers.Kusto
 {
+    using System;
     using System.Threading.Tasks;
     using global::Kusto.Data.Common;
     using global::Kusto.Data.Ingestion;
@@ -37,7 +38,7 @@ namespace Tim.Backend.Providers.Kusto
         {
             var command = CslCommandGenerator.GenerateTableCreateCommand(kustoTable.TableName, kustoTable.TableSchema);
             m_logger.Information($"Attempting to create new table {kustoTable.TableName}.", "KustoAdminClient-CreateTableAsync");
-            await m_client.ExecuteControlCommandAsync(kustoTable.DatabaseName, command);
+            await ExecuteControlCommandAsync(kustoTable.DatabaseName, command);
         }
 
         /// <summary>
@@ -53,7 +54,20 @@ namespace Tim.Backend.Providers.Kusto
                 kustoTable.TableMappingName,
                 kustoTable.ColumnMappings);
             m_logger.Information($"Attempting to create new table mapping {kustoTable.TableMappingName}.", "KustoAdminClient-CreateTableMappingAsync");
-            await m_client.ExecuteControlCommandAsync(kustoTable.DatabaseName, command);
+            await ExecuteControlCommandAsync(kustoTable.DatabaseName, command);
+        }
+
+        private async Task ExecuteControlCommandAsync(string database, string command)
+        {
+            try
+            {
+                await m_client.ExecuteControlCommandAsync(database, command);
+            }
+            catch (Exception ex)
+            {
+                m_logger.Error(ex.Message);
+                m_logger.Warning($"Unabled to execute command: {command}");
+            }
         }
     }
 }

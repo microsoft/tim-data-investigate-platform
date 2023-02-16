@@ -40,22 +40,21 @@ namespace Tim.Backend.Startup.Config
         public string Password { get; set; } = Environment.GetEnvironmentVariable("AUTH_PASSWORD");
 
         /// <summary>
+        /// Gets or sets the client authority i.e. the tenant id.
+        /// </summary>
+        [Required]
+        public string ClientAuthority { get; set; } = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+
+        /// <summary>
         /// Gets or sets the client app id.
         /// </summary>
         [Required]
-        public string ClientId { get; set; } = Environment.GetEnvironmentVariable("AUTH_CLIENT_ID");
+        public string ClientId { get; set; } = Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
 
         /// <summary>
         /// Gets or sets the client app secret.
         /// </summary>
-        [Required]
-        public string ClientSecret { get; set; } = Environment.GetEnvironmentVariable("AUTH_CLIENT_SECRET");
-
-        /// <summary>
-        /// Gets or sets the client authority i.e. the tenant id.
-        /// </summary>
-        [Required]
-        public string ClientAuthority { get; set; } = Environment.GetEnvironmentVariable("AUTH_CLIENT_AUTHORITY");
+        public string ClientSecret { get; set; } = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
 
         /// <summary>
         /// Ensures that all required values are populated.
