@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/microsoft/tim-data-investigate-platform/compare/core-v2.0.0...core-v2.0.1) (2023-02-16)
+
+
+### Bug Fixes
+
+* continue even if Kusto create tables failed. ([1ac713f](https://github.com/microsoft/tim-data-investigate-platform/commit/1ac713ff11272406073245271d82f0d520c26b1a))
+* use default auth for azure to support managed identities. ([#20](https://github.com/microsoft/tim-data-investigate-platform/issues/20)) ([1ac713f](https://github.com/microsoft/tim-data-investigate-platform/commit/1ac713ff11272406073245271d82f0d520c26b1a))
+
 ## [2.0.0](https://github.com/microsoft/tim-data-investigate-platform/compare/core-v1.3.2...core-v2.0.0) (2023-02-15)
 
 
