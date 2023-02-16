@@ -9,6 +9,8 @@ namespace Tim.Backend.Startup
     using System.IO;
     using System.Reflection;
     using System.Threading.Tasks;
+    using Azure.Core;
+    using Azure.Identity;
     using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
     using Kusto.Data.Net.Client;
@@ -153,7 +155,7 @@ namespace Tim.Backend.Startup
                         ValidateIssuer = true,
                         ValidateAudience = true,
                         ValidateIssuerSigningKey = true,
-                        ValidIssuer = "https://login.microsoftonline.com/{authConfigs.ClientAuthority}",
+                        ValidIssuer = $"https://login.microsoftonline.com/{authConfigs.ClientAuthority}",
                         ValidAudience = $"api://{authConfigs.ClientId}",
                         RequireExpirationTime = true,
                         ValidateLifetime = true,
@@ -162,13 +164,17 @@ namespace Tim.Backend.Startup
                     options.SaveToken = true;
                 });
 
-            services.AddSingleton(p =>
-            {
-                return ConfidentialClientApplicationBuilder.Create(authConfigs.ClientId)
-                    .WithAuthority($"https://login.microsoftonline.com/{authConfigs.ClientAuthority}")
-                    .WithClientSecret(authConfigs.ClientSecret)
-                    .Build();
-            });
+            var tokenCredential = new DefaultAzureCredential();
+
+            services.AddSingleton(p => ConfidentialClientApplicationBuilder
+                .Create(authConfigs.ClientId)
+                .WithClientAssertion(async (AssertionRequestOptions options) =>
+                {
+                    var tokenResult = await tokenCredential.GetTokenAsync(
+                        new TokenRequestContext(new[] { "user_impersonation" }), options.CancellationToken);
+                    return tokenResult.Token;
+                })
+                .Build());
 
             services.AddPolicyRegistry();
         }
@@ -297,7 +303,7 @@ namespace Tim.Backend.Startup
             kustoConfigs.Validate();
 
             var connectionString = new KustoConnectionStringBuilder(kustoConfigs.KustoClusterUri, kustoConfigs.KustoDatabase)
-                .WithAadApplicationKeyAuthentication(kustoConfigs.KustoAppId, kustoConfigs.KustoAppKey, kustoConfigs.KustoAppAuthority);
+                .WithAadAzureTokenCredentialsAuthentication(new DefaultAzureCredential());
 
             services.AddScoped(p =>
             {

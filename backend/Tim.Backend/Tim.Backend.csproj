@@ -26,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Autofac" />
+    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="CouchbaseNetClient" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
