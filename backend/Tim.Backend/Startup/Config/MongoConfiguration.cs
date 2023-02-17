@@ -34,6 +34,11 @@ namespace Tim.Backend.Startup.Config
         public string DatabaseName { get; set; } = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME");
 
         /// <summary>
+        /// Gets or sets a value indicating whether cosmosdb is being used.
+        /// </summary>
+        public bool WithCosmosDb { get; set; } = Environment.GetEnvironmentVariable("MONGO_WITH_COSMOSDB") == "true";
+
+        /// <summary>
         /// Ensures that all required values are populated.
         /// </summary>
         /// <exception cref="AggregateException">Throws exception if values are not populated. </exception>

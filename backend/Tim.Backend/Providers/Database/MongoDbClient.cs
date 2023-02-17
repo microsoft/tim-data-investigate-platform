@@ -85,8 +85,9 @@ namespace Tim.Backend.Providers.Database
         private async Task CreateKustoExpireIndexKustoQueryRun(string collectionName)
         {
             var builder = Builders<KustoQueryRun>.IndexKeys;
+            var keys = m_configs.WithCosmosDb ? builder.Ascending("_ts") : builder.Ascending(x => x.ExecuteDateTimeUtc);
             var indexModel = new CreateIndexModel<KustoQueryRun>(
-                builder.Ascending(x => x.ExecuteDateTimeUtc),
+                keys,
                 new CreateIndexOptions
                 {
                     ExpireAfter = TimeSpan.FromDays(1),
