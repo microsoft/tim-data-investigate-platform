@@ -26,31 +26,32 @@ namespace Tim.Backend.Providers.Database
         private static readonly TimeSpan s_initializationTimeout = TimeSpan.FromMinutes(2);
         private static readonly TimeSpan s_queryTimeout = TimeSpan.FromSeconds(10);
         private readonly ILogger m_logger;
+        private readonly CouchbaseConfiguration m_configs;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CouchbaseDbClient"/> class.
         /// </summary>
         /// <param name="dbConfigs">Collection/table names.</param>
-        public CouchbaseDbClient(DatabaseConfiguration dbConfigs)
+        public CouchbaseDbClient(CouchbaseConfiguration dbConfigs)
         {
             m_logger = Log.Logger;
-            Configs = dbConfigs;
+            m_configs = dbConfigs;
         }
 
         /// <summary>
-        /// Gets or sets the Couchbase db client.
+        /// Gets or sets the cluster connection.
         /// </summary>
-        public ICluster CouchBaseClient { get; set; }
+        public ICluster Cluster { get; set; }
 
         /// <summary>
-        /// Gets or sets the database configs.
-        /// </summary>
-        public DatabaseConfiguration Configs { get; set; }
-
-        /// <summary>
-        /// Gets or sets the bucket after initialization.
+        /// Gets or sets the bucket connection.
         /// </summary>
         public IBucket Bucket { get; set; }
+
+        /// <summary>
+        /// Gets or sets the scope connection.
+        /// </summary>
+        public IScope Scope { get; set; }
 
         /// <summary>
         /// Generate the collection name for this entity type.
@@ -64,30 +65,24 @@ namespace Tim.Backend.Providers.Database
         }
 
         /// <inheritdoc/>
-        public async Task ConnectAsync()
-        {
-            m_logger.Information($"CouchbaseDbClient is connecting to database.");
-            CouchBaseClient = await Cluster.ConnectAsync(
-                Configs.DatabaseConnection,
-                new ClusterOptions
-                {
-                    UserName = Configs.DbUserName,
-                    Password = Configs.DbUserPassword,
-                    KvTimeout = s_queryTimeout,
-                });
-            m_logger.Information($"CouchbaseDbClient has been created.");
-        }
-
-        /// <inheritdoc/>
         public async Task InitializeAsync()
         {
-            if (CouchBaseClient is null)
+            Cluster = await Couchbase.Cluster.ConnectAsync(
+                m_configs.ConnectionString,
+                new ClusterOptions
+                {
+                    UserName = m_configs.UserName,
+                    Password = m_configs.UserPassword,
+                    KvTimeout = s_queryTimeout,
+                });
+
+            if (Cluster is null)
             {
-                throw new InvalidOperationException("CouchBaseClient must be initialized with a connection.");
+                throw new InvalidOperationException("Cluster must be initialized.");
             }
 
-            await CouchBaseClient.WaitUntilReadyAsync(s_initializationTimeout);
-            Bucket = await CreateBucketIfNotExists(Configs.BucketName);
+            await Cluster.WaitUntilReadyAsync(s_initializationTimeout);
+            Bucket = await CreateBucketIfNotExists(m_configs.BucketName);
             await CreateCollectionIfNotExists<KustoQueryRun>();
             await CreateCollectionIfNotExists<QueryTemplate>();
         }
@@ -122,6 +117,11 @@ namespace Tim.Backend.Providers.Database
         private async Task CreateCollectionIfNotExists<T>()
             where T : IJsonEntity
         {
+            if (Cluster is null)
+            {
+                throw new InvalidOperationException("Cluster must be initialized.");
+            }
+
             if (Bucket is null)
             {
                 throw new InvalidOperationException("Bucket must be initialized.");
@@ -147,7 +147,7 @@ namespace Tim.Backend.Providers.Database
             }
 
             m_logger.Information($"Creating primary index for collection {collectionName}.");
-            await CouchBaseClient.QueryIndexes.CreatePrimaryIndexAsync(
+            await Cluster.QueryIndexes.CreatePrimaryIndexAsync(
                 Bucket.Name,
                 new CreatePrimaryQueryIndexOptions()
                     .ScopeName(scopeName)
@@ -157,18 +157,18 @@ namespace Tim.Backend.Providers.Database
 
         private async Task<IBucket> CreateBucketIfNotExists(string bucketName)
         {
-            if (CouchBaseClient is null)
+            if (Cluster is null)
             {
-                throw new InvalidOperationException("CouchBaseClient must be initialized with a connection.");
+                throw new InvalidOperationException("Cluster must be initialized.");
             }
 
-            var buckets = await CouchBaseClient.Buckets.GetAllBucketsAsync();
+            var buckets = await Cluster.Buckets.GetAllBucketsAsync();
             if (!buckets.ContainsKey(bucketName))
             {
                 m_logger.Information($"Creating bucket {bucketName}.");
 
                 // TODO: This should be configured by the couchbase server and not hard coded here
-                await CouchBaseClient.Buckets.CreateBucketAsync(
+                await Cluster.Buckets.CreateBucketAsync(
                     new BucketSettings
                     {
                         BucketType = BucketType.Couchbase,
@@ -179,9 +179,7 @@ namespace Tim.Backend.Providers.Database
                     new CreateBucketOptions().Timeout(s_initializationTimeout));
             }
 
-            var bucket = await CouchBaseClient.BucketAsync(bucketName);
-
-            return bucket;
+            return await Cluster.BucketAsync(bucketName);
         }
     }
 }

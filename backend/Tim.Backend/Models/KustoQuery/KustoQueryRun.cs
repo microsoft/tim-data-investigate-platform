@@ -6,7 +6,9 @@ namespace Tim.Backend.Models.KustoQuery
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.Runtime.Serialization;
+    using MongoDB.Bson.Serialization.Attributes;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -82,6 +84,8 @@ namespace Tim.Backend.Models.KustoQuery
         /// <summary>
         /// Gets or sets the query run Id.
         /// </summary>
+        [Required]
+        [BsonId]
         [JsonProperty("queryRunId")]
         public Guid QueryRunId { get; set; }
 

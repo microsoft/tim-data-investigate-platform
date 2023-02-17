@@ -1,4 +1,4 @@
-﻿// <copyright file="RedisConfiguration.cs" company="Microsoft">
+﻿// <copyright file="MongoConfiguration.cs" company="Microsoft">
 //   Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -10,22 +10,28 @@ namespace Tim.Backend.Startup.Config
     using System.Linq;
 
     /// <summary>
-    /// Redis configurations.
+    /// Mongo DB configurations.
     /// </summary>
-    public class RedisConfiguration
+    public class MongoConfiguration
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RedisConfiguration"/> class.
+        /// Initializes a new instance of the <see cref="MongoConfiguration"/> class.
         /// </summary>
-        public RedisConfiguration()
+        public MongoConfiguration()
         {
         }
 
         /// <summary>
-        /// Gets or sets Reids connection string.
+        /// Gets or sets Mongo DB connection string.
         /// </summary>
         [Required]
-        public string ConnectionString { get; set; } = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+        public string ConnectionString { get; set; } = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING");
+
+        /// <summary>
+        /// Gets or sets the database.
+        /// </summary>
+        [Required]
+        public string DatabaseName { get; set; } = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME");
 
         /// <summary>
         /// Ensures that all required values are populated.
