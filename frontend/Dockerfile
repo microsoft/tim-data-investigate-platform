@@ -23,5 +23,12 @@ FROM nginx:stable-alpine
 
 COPY --from=merge-build /dist /usr/share/nginx/html
 
+ADD .docker/nginx.conf.envsubst /
+ADD .docker/config.js.envsubst /
+
+ADD .docker/docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-g", "daemon off;"]
