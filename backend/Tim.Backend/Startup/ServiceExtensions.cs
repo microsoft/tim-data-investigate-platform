@@ -66,6 +66,7 @@ namespace Tim.Backend.Startup
 
             services.AddOptions();
             services.Configure<KustoConfiguration>(configuration.GetSection(nameof(KustoConfiguration)));
+            services.Configure<DatabaseConfiguration>(configuration.GetSection(nameof(DatabaseConfiguration)));
             services.Configure<CouchbaseConfiguration>(configuration.GetSection(nameof(CouchbaseConfiguration)));
             services.Configure<AuthConfiguration>(configuration.GetSection(nameof(AuthConfiguration)));
             services.Configure<RedisConfiguration>(configuration.GetSection(nameof(RedisConfiguration)));
