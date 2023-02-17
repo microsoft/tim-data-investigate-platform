@@ -1,4 +1,4 @@
-﻿// <copyright file="DatabaseConfiguration.cs" company="Microsoft">
+﻿// <copyright file="MongoConfiguration.cs" company="Microsoft">
 //   Copyright (c) Microsoft Corporation. All rights reserved.
 // </copyright>
 
@@ -10,46 +10,28 @@ namespace Tim.Backend.Startup.Config
     using System.Linq;
 
     /// <summary>
-    /// Select which database to use.
+    /// Mongo DB configurations.
     /// </summary>
-    public enum DatabaseType
+    public class MongoConfiguration
     {
         /// <summary>
-        /// Couchbase.
+        /// Initializes a new instance of the <see cref="MongoConfiguration"/> class.
         /// </summary>
-        Couchbase,
-
-        /// <summary>
-        /// MongoDb.
-        /// </summary>
-        MongoDb,
-
-        /// <summary>
-        /// Redis.
-        /// </summary>
-        Redis,
-    }
-
-    /// <summary>
-    /// Swagger configurations.
-    /// </summary>
-    public class DatabaseConfiguration
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DatabaseConfiguration"/> class.
-        /// </summary>
-        public DatabaseConfiguration()
+        public MongoConfiguration()
         {
         }
 
         /// <summary>
-        /// Gets or sets the database selection to use.
+        /// Gets or sets Mongo DB connection string.
         /// </summary>
         [Required]
-        public DatabaseType DatabaseType { get; set; } =
-            Enum.TryParse(Environment.GetEnvironmentVariable("DATABASE_TYPE"), true, out DatabaseType databaseType)
-            ? databaseType
-            : DatabaseType.Couchbase;
+        public string ConnectionString { get; set; } = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING");
+
+        /// <summary>
+        /// Gets or sets the database.
+        /// </summary>
+        [Required]
+        public string DatabaseName { get; set; } = Environment.GetEnvironmentVariable("MONGO_DATABASE_NAME");
 
         /// <summary>
         /// Ensures that all required values are populated.

@@ -11,7 +11,6 @@ namespace Tim.Backend.Startup
     using System.Threading.Tasks;
     using Azure.Core;
     using Azure.Identity;
-    using Kusto.Cloud.Platform.Utils;
     using Kusto.Data;
     using Kusto.Data.Net.Client;
     using Kusto.Ingest;
@@ -25,7 +24,6 @@ namespace Tim.Backend.Startup
     using Microsoft.IdentityModel.Tokens;
     using Microsoft.OpenApi.Models;
     using Serilog;
-    using StackExchange.Redis;
     using Tim.Backend.Models.KustoQuery;
     using Tim.Backend.Models.TaggedEvents.Tables;
     using Tim.Backend.Models.Templates;
@@ -69,8 +67,10 @@ namespace Tim.Backend.Startup
             services.AddOptions();
             services.Configure<KustoConfiguration>(configuration.GetSection(nameof(KustoConfiguration)));
             services.Configure<DatabaseConfiguration>(configuration.GetSection(nameof(DatabaseConfiguration)));
+            services.Configure<CouchbaseConfiguration>(configuration.GetSection(nameof(CouchbaseConfiguration)));
             services.Configure<AuthConfiguration>(configuration.GetSection(nameof(AuthConfiguration)));
             services.Configure<RedisConfiguration>(configuration.GetSection(nameof(RedisConfiguration)));
+            services.Configure<MongoConfiguration>(configuration.GetSection(nameof(MongoConfiguration)));
             services.Configure<SwaggerConfiguration>(configuration.GetSection(nameof(SwaggerConfiguration)));
         }
 
@@ -165,16 +165,19 @@ namespace Tim.Backend.Startup
                 });
 
             var tokenCredential = new DefaultAzureCredential();
-
-            services.AddSingleton(p => ConfidentialClientApplicationBuilder
+            var builder = ConfidentialClientApplicationBuilder
                 .Create(authConfigs.ClientId)
-                .WithClientAssertion(async (AssertionRequestOptions options) =>
+                .WithAuthority($"https://login.microsoftonline.com/{authConfigs.ClientAuthority}");
+            builder = !string.IsNullOrEmpty(authConfigs.ClientSecret)
+                ? builder.WithClientSecret(authConfigs.ClientSecret)
+                : builder.WithClientAssertion(async options =>
                 {
                     var tokenResult = await tokenCredential.GetTokenAsync(
-                        new TokenRequestContext(new[] { "user_impersonation" }), options.CancellationToken);
+                        new TokenRequestContext(new[] { $"{authConfigs.ClientId}/.default" }), options.CancellationToken);
                     return tokenResult.Token;
-                })
-                .Build());
+                });
+
+            services.AddScoped(p => builder.Build());
 
             services.AddPolicyRegistry();
         }
@@ -211,7 +214,6 @@ namespace Tim.Backend.Startup
 
             var scope = host.Services.CreateScope();
             var dbService = scope.ServiceProvider.GetService<IDatabaseClient>();
-            await dbService.ConnectAsync();
             await dbService.InitializeAsync();
         }
 
@@ -254,7 +256,7 @@ namespace Tim.Backend.Startup
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            var dbConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            var dbConfigs = configuration.GetSection(nameof(CouchbaseConfiguration)).Get<CouchbaseConfiguration>() ?? new CouchbaseConfiguration();
             dbConfigs.Validate();
 
             var cbClient = new CouchbaseDbClient(dbConfigs);
@@ -276,17 +278,56 @@ namespace Tim.Backend.Startup
             var redisConfigs = configuration.GetSection(nameof(RedisConfiguration)).Get<RedisConfiguration>() ?? new RedisConfiguration();
             redisConfigs.Validate();
 
-            services.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(p =>
+            var redisClient = new RedisDbClient(redisConfigs);
+            services.AddScoped<IDatabaseClient, RedisDbClient>(p => redisClient);
+            services.AddScoped<IDatabaseRepository<KustoQueryRun>, RedisRepository<KustoQueryRun>>(p => new RedisRepository<KustoQueryRun>(redisClient));
+            services.AddScoped<IDatabaseRepository<QueryTemplate>, RedisRepository<QueryTemplate>>(p => new RedisRepository<QueryTemplate>(redisClient));
+        }
+
+        /// <summary>
+        /// Add mongo db service.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        /// <exception cref="ArgumentNullException">Error if any expected configurations are null.</exception>
+        public static void AddMongoDb(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var mongoConfigs = configuration.GetSection(nameof(MongoConfiguration)).Get<MongoConfiguration>() ?? new MongoConfiguration();
+            mongoConfigs.Validate();
+
+            var mongoClient = new MongoDbClient(mongoConfigs);
+            services.AddScoped<IDatabaseClient, MongoDbClient>(p => mongoClient);
+            services.AddScoped<IDatabaseRepository<KustoQueryRun>, MongoRepository<KustoQueryRun>>(p => new MongoRepository<KustoQueryRun>(mongoClient));
+            services.AddScoped<IDatabaseRepository<QueryTemplate>, MongoRepository<QueryTemplate>>(p => new MongoRepository<QueryTemplate>(mongoClient));
+        }
+
+        /// <summary>
+        /// Select and add the database.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        public static void AddDatabase(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var databaseConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            databaseConfigs.Validate();
+
+            switch (databaseConfigs.DatabaseType)
             {
-                var endpoints = new EndPointCollection();
-                redisConfigs.RedisHosts.Split(",").ForEach(host => endpoints.Add(host));
-                return ConnectionMultiplexer.Connect(
-                    new ConfigurationOptions()
-                    {
-                        EndPoints = endpoints,
-                        Password = redisConfigs.RedisPassword,
-                    });
-            });
+                case DatabaseType.MongoDb:
+                    services.AddMongoDb(configuration);
+                    break;
+                case DatabaseType.Redis:
+                    services.AddRedis(configuration);
+                    break;
+                case DatabaseType.Couchbase:
+                default:
+                    services.AddCouchBase(configuration);
+                    break;
+            }
         }
 
         /// <summary>

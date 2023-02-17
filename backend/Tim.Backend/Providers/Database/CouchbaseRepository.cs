@@ -21,6 +21,8 @@ namespace Tim.Backend.Providers.Database
         where TJsonEntity : IJsonEntity
     {
         private readonly ILogger m_logger;
+        private readonly CouchbaseDbClient m_client;
+        private readonly Task<ICouchbaseCollection> m_collection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CouchbaseRepository{TJsonEntity}"/> class.
@@ -29,19 +31,9 @@ namespace Tim.Backend.Providers.Database
         public CouchbaseRepository(CouchbaseDbClient dbClient)
         {
             m_logger = Log.Logger;
-            DatabaseClient = dbClient;
-            Collection = DatabaseClient.CollectionAsync<TJsonEntity>();
+            m_client = dbClient;
+            m_collection = m_client.CollectionAsync<TJsonEntity>();
         }
-
-        /// <summary>
-        /// Gets or sets the Couchbase db client.
-        /// </summary>
-        public CouchbaseDbClient DatabaseClient { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Couchbase collection associated with <typeparamref name="TJsonEntity"/>.
-        /// </summary>
-        public Task<ICouchbaseCollection> Collection { get; set; }
 
         /// <inheritdoc/>
         public async Task AddOrUpdateItemAsync(IJsonEntity entity, TimeSpan? timeToLive = null)
@@ -55,7 +47,7 @@ namespace Tim.Backend.Providers.Database
 
             try
             {
-                var collection = await Collection;
+                var collection = await m_collection;
                 var upsertResult = await collection.UpsertAsync(entity.Id, entity, upsertOptions);
             }
             catch (Exception e)
@@ -70,7 +62,7 @@ namespace Tim.Backend.Providers.Database
         {
             try
             {
-                var collection = await Collection;
+                var collection = await m_collection;
                 var getResult = await collection.GetAsync(id);
 
                 return getResult.ContentAs<TJsonEntity>();
@@ -93,7 +85,7 @@ namespace Tim.Backend.Providers.Database
         {
             try
             {
-                var bucket = DatabaseClient.Bucket;
+                var bucket = m_client.Bucket;
                 var scope = await bucket.DefaultScopeAsync();
                 var collectionName = CouchbaseDbClient.GetCollectionName<TJsonEntity>();
                 var queryResult = await scope.QueryAsync<TJsonEntity>($"SELECT d.* FROM {collectionName} d");
@@ -112,7 +104,7 @@ namespace Tim.Backend.Providers.Database
         {
             try
             {
-                var collection = await Collection;
+                var collection = await m_collection;
                 await collection.RemoveAsync(id);
             }
             catch (Exception e)

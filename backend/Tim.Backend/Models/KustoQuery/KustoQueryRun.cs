@@ -6,7 +6,9 @@ namespace Tim.Backend.Models.KustoQuery
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.Runtime.Serialization;
+    using MongoDB.Bson.Serialization.Attributes;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -82,6 +84,8 @@ namespace Tim.Backend.Models.KustoQuery
         /// <summary>
         /// Gets or sets the query run Id.
         /// </summary>
+        [Required]
+        [BsonId]
         [JsonProperty("queryRunId")]
         public Guid QueryRunId { get; set; }
 
@@ -96,13 +100,35 @@ namespace Tim.Backend.Models.KustoQuery
         /// Gets or sets the resulting data from the query.
         /// </summary>
         [JsonProperty("resultData")]
+        [BsonIgnore]
         public IEnumerable<IDictionary<string, object>> ResultData { get; set; }
+
+        /// <summary>
+        /// Gets or sets the result data as a JSON string for databases without proper support.
+        /// </summary>
+        [JsonIgnore]
+        public string ResultDataAsString
+        {
+            get => JsonConvert.SerializeObject(ResultData);
+            set => ResultData = JsonConvert.DeserializeObject<IEnumerable<IDictionary<string, object>>>(value);
+        }
 
         /// <summary>
         /// Gets or sets the execution metrics.
         /// </summary>
         [JsonProperty("executionMetrics")]
+        [BsonIgnore]
         public KustoQueryStats ExecutionMetrics { get; set; }
+
+        /// <summary>
+        /// Gets or sets the execution metrics as a JSON string.
+        /// </summary>
+        [JsonIgnore]
+        public string ExecutionMetricsAsString
+        {
+            get => JsonConvert.SerializeObject(ExecutionMetrics);
+            set => ExecutionMetrics = JsonConvert.DeserializeObject<KustoQueryStats>(value);
+        }
 
         /// <summary>
         /// Gets or sets the stacktrace if present.

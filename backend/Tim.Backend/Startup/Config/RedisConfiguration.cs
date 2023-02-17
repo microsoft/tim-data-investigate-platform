@@ -22,15 +22,10 @@ namespace Tim.Backend.Startup.Config
         }
 
         /// <summary>
-        /// Gets or sets Redis Hosts for connecting to redis.
+        /// Gets or sets Reids connection string.
         /// </summary>
         [Required]
-        public string RedisHosts { get; set; } = Environment.GetEnvironmentVariable("REDIS_HOSTS");
-
-        /// <summary>
-        /// Gets or sets Redis Password for connecting to redis.
-        /// </summary>
-        public string RedisPassword { get; set; } = Environment.GetEnvironmentVariable("REDIS_PASSWORD") ?? string.Empty;
+        public string ConnectionString { get; set; } = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
 
         /// <summary>
         /// Ensures that all required values are populated.

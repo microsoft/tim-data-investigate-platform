@@ -9,6 +9,7 @@ namespace Tim.Backend.Models.Templates
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
     using System.Runtime.Serialization;
+    using MongoDB.Bson.Serialization.Attributes;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -42,6 +43,7 @@ namespace Tim.Backend.Models.Templates
         /// Gets or sets the uuid for a given query template.
         /// </summary>
         [Required]
+        [BsonId]
         [JsonProperty("uuid")]
         public Guid Uuid { get; set; }
 
@@ -147,7 +149,18 @@ namespace Tim.Backend.Models.Templates
         /// Gets or sets the query template columns.
         /// </summary>
         [JsonProperty("columns")]
+        [BsonIgnore]
         public Dictionary<string, object> Columns { get; set; }
+
+        /// <summary>
+        /// Gets or sets the query template columns as a JSON.
+        /// </summary>
+        [JsonIgnore]
+        public string ColumnsAsString
+        {
+            get => JsonConvert.SerializeObject(Columns);
+            set => Columns = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
+        }
 
         /// <summary>
         /// Gets or sets the query.
