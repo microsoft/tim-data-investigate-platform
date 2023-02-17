@@ -149,7 +149,18 @@ namespace Tim.Backend.Models.Templates
         /// Gets or sets the query template columns.
         /// </summary>
         [JsonProperty("columns")]
+        [BsonIgnore]
         public Dictionary<string, object> Columns { get; set; }
+
+        /// <summary>
+        /// Gets or sets the query template columns as a JSON.
+        /// </summary>
+        [JsonIgnore]
+        public string ColumnsAsString
+        {
+            get => JsonConvert.SerializeObject(Columns);
+            set => Columns = JsonConvert.DeserializeObject<Dictionary<string, object>>(value);
+        }
 
         /// <summary>
         /// Gets or sets the query.

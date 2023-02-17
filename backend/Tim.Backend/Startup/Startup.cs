@@ -65,9 +65,7 @@ namespace Tim.Backend.Startup
                 });
 
             services.AddSwagger(Configuration);
-            services.AddCouchBase(Configuration);
-            services.AddRedis(Configuration);
-            services.AddMongoDb(Configuration);
+            services.AddDatabase(Configuration);
             services.AddKusto(Configuration);
         }
 

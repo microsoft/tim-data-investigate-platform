@@ -164,16 +164,19 @@ namespace Tim.Backend.Startup
                 });
 
             var tokenCredential = new DefaultAzureCredential();
-
-            services.AddSingleton(p => ConfidentialClientApplicationBuilder
+            var builder = ConfidentialClientApplicationBuilder
                 .Create(authConfigs.ClientId)
-                .WithClientAssertion(async (AssertionRequestOptions options) =>
+                .WithAuthority($"https://login.microsoftonline.com/{authConfigs.ClientAuthority}");
+            builder = !string.IsNullOrEmpty(authConfigs.ClientSecret)
+                ? builder.WithClientSecret(authConfigs.ClientSecret)
+                : builder.WithClientAssertion(async options =>
                 {
                     var tokenResult = await tokenCredential.GetTokenAsync(
-                        new TokenRequestContext(new[] { "user_impersonation" }), options.CancellationToken);
+                        new TokenRequestContext(new[] { $"{authConfigs.ClientId}/.default" }), options.CancellationToken);
                     return tokenResult.Token;
-                })
-                .Build());
+                });
+
+            services.AddScoped(p => builder.Build());
 
             services.AddPolicyRegistry();
         }
@@ -297,6 +300,33 @@ namespace Tim.Backend.Startup
             services.AddScoped<IDatabaseClient, MongoDbClient>(p => mongoClient);
             services.AddScoped<IDatabaseRepository<KustoQueryRun>, MongoRepository<KustoQueryRun>>(p => new MongoRepository<KustoQueryRun>(mongoClient));
             services.AddScoped<IDatabaseRepository<QueryTemplate>, MongoRepository<QueryTemplate>>(p => new MongoRepository<QueryTemplate>(mongoClient));
+        }
+
+        /// <summary>
+        /// Select and add the database.
+        /// </summary>
+        /// <param name="services">Collection of services.</param>
+        /// <param name="configuration">Defined configuration.</param>
+        public static void AddDatabase(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var databaseConfigs = configuration.GetSection(nameof(DatabaseConfiguration)).Get<DatabaseConfiguration>() ?? new DatabaseConfiguration();
+            databaseConfigs.Validate();
+
+            switch (databaseConfigs.DatabaseType)
+            {
+                case DatabaseType.MongoDb:
+                    services.AddMongoDb(configuration);
+                    break;
+                case DatabaseType.Redis:
+                    services.AddRedis(configuration);
+                    break;
+                case DatabaseType.Couchbase:
+                default:
+                    services.AddCouchBase(configuration);
+                    break;
+            }
         }
 
         /// <summary>

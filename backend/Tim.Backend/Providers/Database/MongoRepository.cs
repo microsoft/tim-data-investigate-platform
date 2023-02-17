@@ -77,6 +77,7 @@ namespace Tim.Backend.Providers.Database
             try
             {
                 var filter = Builders<TJsonEntity>.Filter.Empty;
+                var projection = Builders<TJsonEntity>.Projection.Exclude("_id");
                 return await m_collection
                     .Find(filter)
                     .ToListAsync();

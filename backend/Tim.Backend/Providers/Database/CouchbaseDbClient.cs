@@ -7,10 +7,13 @@ namespace Tim.Backend.Providers.Database
     using System;
     using System.Threading.Tasks;
     using Couchbase;
+    using Couchbase.Core.IO.Serializers;
     using Couchbase.KeyValue;
     using Couchbase.Management.Buckets;
     using Couchbase.Management.Collections;
     using Couchbase.Management.Query;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
     using Serilog;
     using Tim.Backend.Models;
     using Tim.Backend.Models.KustoQuery;
@@ -74,6 +77,15 @@ namespace Tim.Backend.Providers.Database
                     UserName = m_configs.UserName,
                     Password = m_configs.UserPassword,
                     KvTimeout = s_queryTimeout,
+                    Serializer = new DefaultSerializer(
+                    new JsonSerializerSettings()
+                    {
+                        ContractResolver = new DefaultContractResolver(),
+                    },
+                    new JsonSerializerSettings()
+                    {
+                        ContractResolver = new DefaultContractResolver(),
+                    }),
                 });
 
             if (Cluster is null)

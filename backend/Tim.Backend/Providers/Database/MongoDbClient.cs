@@ -54,11 +54,32 @@ namespace Tim.Backend.Providers.Database
 
             Database = new MongoClient(m_configs.ConnectionString)
                 .GetDatabase(m_configs.DatabaseName);
-            await Database.CreateCollectionAsync(GetCollectionName<KustoQueryRun>());
-            await Database.CreateCollectionAsync(GetCollectionName<QueryTemplate>());
+
+            await CreateCollectionAsync(GetCollectionName<KustoQueryRun>());
+            await CreateCollectionAsync(GetCollectionName<QueryTemplate>());
 
             // TODO: This method should be more generic
             await CreateKustoExpireIndexKustoQueryRun(GetCollectionName<KustoQueryRun>());
+        }
+
+        private async Task CreateCollectionAsync(string collectionName)
+        {
+            try
+            {
+                m_logger.Information($"Creating collection {collectionName}.");
+                await Database.CreateCollectionAsync(collectionName);
+            }
+            catch (MongoCommandException ex)
+            {
+                if (ex.Code == 48)
+                {
+                    m_logger.Information($"Collection {collectionName} already exists.");
+                }
+                else
+                {
+                    throw ex;
+                }
+            }
         }
 
         private async Task CreateKustoExpireIndexKustoQueryRun(string collectionName)
@@ -71,6 +92,7 @@ namespace Tim.Backend.Providers.Database
                     ExpireAfter = TimeSpan.FromDays(1),
                 });
 
+            m_logger.Information($"Creating expire index for collection {collectionName}.");
             await Database.GetCollection<KustoQueryRun>(collectionName).Indexes
                 .CreateOneAsync(indexModel);
         }
