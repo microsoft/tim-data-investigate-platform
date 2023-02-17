@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0](https://github.com/microsoft/tim-data-investigate-platform/compare/core-v2.0.1...core-v2.1.0) (2023-02-17)
+
+
+### Features
+
+* add support for mongodb and redis ([#22](https://github.com/microsoft/tim-data-investigate-platform/issues/22)) ([95bcf2e](https://github.com/microsoft/tim-data-investigate-platform/commit/95bcf2e02758c24c8470ab89e0e82dfaeb68ad60))
+
+
+### Bug Fixes
+
+* only load the selected database. ([95bcf2e](https://github.com/microsoft/tim-data-investigate-platform/commit/95bcf2e02758c24c8470ab89e0e82dfaeb68ad60))
+* prevent camelcase default for couchbase. ([95bcf2e](https://github.com/microsoft/tim-data-investigate-platform/commit/95bcf2e02758c24c8470ab89e0e82dfaeb68ad60))
+
 ## [2.0.1](https://github.com/microsoft/tim-data-investigate-platform/compare/core-v2.0.0...core-v2.0.1) (2023-02-16)
 
 
