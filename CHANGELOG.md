@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/microsoft/tim-data-investigate-platform/compare/core-v2.1.0...core-v2.1.1) (2023-02-17)
+
+
+### Bug Fixes
+
+* support for cosmodb ([#24](https://github.com/microsoft/tim-data-investigate-platform/issues/24)) ([c58caf6](https://github.com/microsoft/tim-data-investigate-platform/commit/c58caf6713d3b61f329efc3cf297ca51bced3c88))
+
 ## [2.1.0](https://github.com/microsoft/tim-data-investigate-platform/compare/core-v2.0.1...core-v2.1.0) (2023-02-17)
 
 
