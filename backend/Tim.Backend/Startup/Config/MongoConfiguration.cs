@@ -36,7 +36,8 @@ namespace Tim.Backend.Startup.Config
         /// <summary>
         /// Gets or sets a value indicating whether cosmosdb is being used.
         /// </summary>
-        public bool WithCosmosDb { get; set; } = Environment.GetEnvironmentVariable("MONGO_WITH_COSMOSDB") == "true";
+        public bool WithCosmosDb { get; set; } =
+            string.Equals(Environment.GetEnvironmentVariable("MONGO_WITH_COSMOSDB"), "true", StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
         /// Ensures that all required values are populated.
