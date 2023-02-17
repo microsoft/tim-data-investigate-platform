@@ -14,7 +14,7 @@ namespace Tim.Backend.Providers.Database
     using Tim.Backend.Models;
 
     /// <summary>
-    /// Repository of operations for Couchbase.
+    /// Repository of operations for Redis.
     /// </summary>
     /// <typeparam name="TJsonEntity">Entity type.</typeparam>
     public class RedisRepository<TJsonEntity> : IDatabaseRepository<TJsonEntity>
@@ -26,7 +26,7 @@ namespace Tim.Backend.Providers.Database
         /// <summary>
         /// Initializes a new instance of the <see cref="RedisRepository{TJsonEntity}"/> class.
         /// </summary>
-        /// <param name="dbClient">Couchbase client.</param>
+        /// <param name="dbClient">Redis client.</param>
         public RedisRepository(RedisDbClient dbClient)
         {
             m_logger = Log.Logger;
