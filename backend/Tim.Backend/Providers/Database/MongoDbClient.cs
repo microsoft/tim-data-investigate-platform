@@ -6,7 +6,6 @@ namespace Tim.Backend.Providers.Database
 {
     using System;
     using System.Threading.Tasks;
-    using MongoDB.Bson;
     using MongoDB.Driver;
     using Serilog;
     using Tim.Backend.Models;
