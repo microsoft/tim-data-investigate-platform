@@ -12,7 +12,7 @@ http {
         root /usr/share/nginx/html;
 
         location /api/ {
-            proxy_pass         $BACKEND_API;
+            proxy_pass         $BACKEND_URI;
             proxy_redirect     off;
             proxy_set_header   Host $host;
             proxy_set_header   X-Real-IP $remote_addr;
