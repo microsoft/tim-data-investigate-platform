@@ -4,7 +4,7 @@ window.appConfig = {
     authority: 'https://login.microsoftonline.com/$APP_TENANT_ID',
   },
   redirectUri: '$REDIRECT_URI',
-  apiEndpoint: '$BACKEND_API',
+  apiEndpoint: '$API_BASEPATH',
   agGridLicenseKey: '$AGGRID_LICENSE',  // Only needed if using enterprise edition
   wikiUri: 'https://github.com/microsoft/tim-data-investigate-platform/wiki',
   issueUri: 'ttps://github.com/microsoft/tim-data-investigate-platform/issues/new?template=issue_template.md',

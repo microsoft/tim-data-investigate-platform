@@ -29,7 +29,7 @@ if [ -z "${KUSTO_DATABASE}" ]; then
 fi
 
 echo "Replacing environment variables"
-envsubst '\$APP_CLIENT_ID \$APP_TENANT_ID \$REDIRECT_URI \$BACKEND_API \$AGGRID_LICENSE \$KUSTO_CLUSTER \$KUSTO_DATABASE' < /config.js.envsubst > /usr/share/nginx/html/config.js
+envsubst '\$APP_CLIENT_ID \$APP_TENANT_ID \$REDIRECT_URI \$BACKEND_URI \$API_BASEPATH \$AGGRID_LICENSE \$KUSTO_CLUSTER \$KUSTO_DATABASE' < /config.js.envsubst > /usr/share/nginx/html/config.js
 envsubst '\$BACKEND_API' < /nginx.conf.envsubst > /etc/nginx/nginx.conf
 
 echo "Running command"
