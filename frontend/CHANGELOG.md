@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.1](https://github.com/itsnotapt/tim-data-investigate-platform/compare/frontend-v1.5.0...frontend-v1.5.1) (2023-02-18)
+
+
+### Bug Fixes
+
+* config.js defer loading. ([53adc0c](https://github.com/itsnotapt/tim-data-investigate-platform/commit/53adc0cb322a11ebab9ed619c5ed17eac4bdc0bc))
+* config.js defer loading. ([0b4718a](https://github.com/itsnotapt/tim-data-investigate-platform/commit/0b4718a660a62378c88337593e55325be08476a5))
+* nginx refer to backend. ([53adc0c](https://github.com/itsnotapt/tim-data-investigate-platform/commit/53adc0cb322a11ebab9ed619c5ed17eac4bdc0bc))
+* nginx refer to backend. ([0b4718a](https://github.com/itsnotapt/tim-data-investigate-platform/commit/0b4718a660a62378c88337593e55325be08476a5))
+
 ## [1.5.0](https://github.com/itsnotapt/tim-data-investigate-platform/compare/frontend-v1.4.0...frontend-v1.5.0) (2023-02-17)
 
 
