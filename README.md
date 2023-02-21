@@ -6,27 +6,14 @@ TIM is a Kusto investigation platform that enables an analyst to quickly pivot b
 
 ### Docker Compose
 
-Download the docker compose YAML file.
+1. Download the docker compose YAML file.
 ```bash
 curl -LO https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/compose.yaml
 ```
 
-Download and modify the frontend configuration file.
-```bash
-curl -L https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/config.js.example -o config.js
-```
+2. Create or set the environment variables (refer to [Environment Variables](.docker/README.md#environment-variables)).
 
-Download and modify the backend configuration env file.
-```bash
-curl -L https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/.env.example -o .env
-```
-
-Download and modify (if required) the NGINX configuration file.
-```bash
-curl -LO https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/nginx.conf
-```
-
-Run docker compose to download the latest images and deploy TIM locally.
+3. Run docker compose to download the latest images and deploy TIM locally.
 ```bash
 docker compose up
 ```

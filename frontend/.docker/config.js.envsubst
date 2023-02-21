@@ -1,20 +1,20 @@
 window.appConfig = {
   auth: {
-    clientId: '$APP_CLIENT_ID',
-    authority: 'https://login.microsoftonline.com/$APP_TENANT_ID',
+    clientId: '$AUTH_CLIENT_ID',
+    authority: 'https://login.microsoftonline.com/$AUTH_TENANT_ID',
   },
   redirectUri: '$REDIRECT_URI',
   apiEndpoint: '$API_BASEPATH',
   agGridLicenseKey: '$AGGRID_LICENSE',  // Only needed if using enterprise edition
   wikiUri: 'https://github.com/microsoft/tim-data-investigate-platform/wiki',
   issueUri: 'ttps://github.com/microsoft/tim-data-investigate-platform/issues/new?template=issue_template.md',
-  tagCluster: '$KUSTO_CLUSTER',
-  tagDatabase: '$KUSTO_DATABASE',
+  tagCluster: '$KUSTO_CLUSTER_URI',
+  tagDatabase: '$KUSTO_DATABASE_NAME',
   defaultClusters: [
     {
       name: 'Cluster',
-      clusters: ['$KUSTO_CLUSTER'],
-      databases: ['$KUSTO_DATABASE'],
+      clusters: ['$KUSTO_CLUSTER_URI'],
+      databases: ['$KUSTO_DATABASE_NAME'],
     },
   ],
 };

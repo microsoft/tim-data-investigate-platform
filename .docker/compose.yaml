@@ -7,9 +7,15 @@ services:
     networks:
       - front-tier
       - back-tier
-    volumes:
-      - ./config.js:/usr/share/nginx/html/config.js
-      - ./nginx.conf:/etc/nginx/nginx.conf
+    environment:
+      - AUTH_CLIENT_ID
+      - AUTH_TENANT_ID
+      - REDIRECT_URI
+      - API_BASEPATH
+      - BACKEND_URI
+      - AGGRID_LICENSE
+      - KUSTO_CLUSTER_URI
+      - KUSTO_DATABASE_NAME
 
   backend:
     build: ../backend
@@ -25,22 +31,23 @@ services:
       - SIGNING_KEY
       - AUTH_USERNAME
       - AUTH_PASSWORD
+      - AUTH_TENANT_ID
       - AUTH_CLIENT_ID
       - AUTH_CLIENT_SECRET
-      - AUTH_CLIENT_AUTHORITY
-      - DB_CONNECT_STRING
-      - DB_USER_NAME
-      - DB_USER_PASSWORD
-      - DATABASE_NAME
+      - AZURE_CLIENT_ID
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_SECRET
+      - COUCHBASE_CONNECTION_STRING
+      - COUCHBASE_USER_NAME
+      - COUCHBASE_USER_PASSWORD
+      - COUCHBASE_DATABASE_NAME
       - KUSTO_INGEST_URL
       - KUSTO_CLUSTER_URI
-      - KUSTO_APP_KEY
-      - KUSTO_CLIENT_APP_ID
-      - KUSTO_CLIENT_APP_AUTHORITY
       - KUSTO_DATABASE_NAME
-      - REDIS_HOSTS
-      - REDIS_PASSWORD
-      - API_BASE_PATH
+      - REDIS_CONNECTION_STRING
+      - MONGO_CONNECTION_STRING
+      - MONGO_DATABASE_NAME
+      - DATABASE_TYPE
 
   couchbase:
     image: couchbase:community

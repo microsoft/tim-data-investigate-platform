@@ -354,3 +354,5 @@ MigrationBackup/
 
 # Jbrains
 .idea
+
+**/.env
