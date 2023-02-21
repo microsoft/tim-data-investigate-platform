@@ -71,7 +71,6 @@ namespace Tim.Backend.Startup
             services.Configure<AuthConfiguration>(configuration.GetSection(nameof(AuthConfiguration)));
             services.Configure<RedisConfiguration>(configuration.GetSection(nameof(RedisConfiguration)));
             services.Configure<MongoConfiguration>(configuration.GetSection(nameof(MongoConfiguration)));
-            services.Configure<SwaggerConfiguration>(configuration.GetSection(nameof(SwaggerConfiguration)));
         }
 
         /// <summary>
@@ -449,18 +448,15 @@ namespace Tim.Backend.Startup
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            var serverConfigs = configuration.GetSection(nameof(SwaggerConfiguration)).Get<SwaggerConfiguration>() ?? new SwaggerConfiguration();
-            serverConfigs.Validate();
-
             app.UseSwagger(c =>
             {
-                c.RouteTemplate = serverConfigs.ApiBasePath + "swagger/{documentName}/swagger.json";
+                c.RouteTemplate = "api/swagger/{documentName}/swagger.json";
             });
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint($"/{serverConfigs.ApiBasePath}swagger/v1/swagger.json", "API");
-                c.RoutePrefix = $"{serverConfigs.ApiBasePath}swagger";
+                c.SwaggerEndpoint($"/api/swagger/v1/swagger.json", "API");
+                c.RoutePrefix = $"api/swagger";
             });
         }
 
