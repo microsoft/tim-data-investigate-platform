@@ -1,6 +1,6 @@
-# TIM
+# Threat Investigation and Modeling (TIM) Platform
 
-TIM is a Kusto investigation platform that enables an analyst to quickly pivot between data sources; annotate their findings; and promotes collaboration through shared queries (pivots) and centralized tagged events.
+TIM is a Kusto investigation platform that enables an analyst to quickly pivot between data sources; annotate their findings; and collaborate through shared queries (pivots) and centralized tagged events.
 
 ## Getting Started
 
