@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.4.0...frontend-v1.4.1) (2023-07-24)
+
+
+### Bug Fixes
+
+* env inject config.js and nginx ([#27](https://github.com/microsoft/tim-data-investigate-platform/issues/27)) ([9fa9eb9](https://github.com/microsoft/tim-data-investigate-platform/commit/9fa9eb9115d15f3f0b8f6a0ce6b50517330d4e36))
+
 ## [1.4.0](https://github.com/microsoft/tim-data-investigate-platform/compare/frontend-v1.3.2...frontend-v1.4.0) (2023-02-15)
 
 
