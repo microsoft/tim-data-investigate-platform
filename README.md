@@ -2,6 +2,8 @@
 
 TIM is a Kusto investigation platform that enables an analyst to quickly pivot between data sources; annotate their findings; and collaborate through shared queries (pivots) and centralized tagged events.
 
+*NOTE*: This project is under active development - please pardon our dust as we clean and polish TIM for our users.
+
 ## Getting Started
 
 ### Docker Compose
