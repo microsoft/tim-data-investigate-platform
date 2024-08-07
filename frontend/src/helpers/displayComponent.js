@@ -6,7 +6,7 @@ import { runKustoQueryPoll } from '@/helpers/queries';
 
 export const convertToCustomQuery = async (uuid, queryTemplate, params) => {
   const cluster = queryTemplate.buildCluster(params);
-  const { database } = queryTemplate;
+  const database = queryTemplate.buildDatabase(params);
   const query = queryTemplate.buildQuery(params);
 
   await store.dispatch('displayComponent/convertDisplayComponent', {
@@ -116,7 +116,7 @@ export const runTemplateQuery = async (uuid) => {
   const { queryTemplate, inParams } = store.getters['displayComponent/getComponentParams'](uuid);
 
   const cluster = queryTemplate.buildCluster(inParams);
-  const { database } = queryTemplate;
+  const database = queryTemplate.buildDatabase(inParams);
   const query = queryTemplate.buildQuery(inParams);
 
   await runNewQuery(uuid, query, cluster, database);

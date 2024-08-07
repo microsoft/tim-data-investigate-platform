@@ -1,0 +1,37 @@
+name: Domain Timeline (Match)
+queryType: query
+menu: Show timeline of events associated with domain (Match)
+summary: Timeline associated with the domain from {{domain}}
+path:
+  - Network
+  - Domain
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params: null
+fields:
+  domain:
+    type: match
+    from: null
+    regex: ^url$|^link$|^domain$
+  timestamp:
+    type: datetime
+    from: null
+    regex: null
+columns:
+  default:
+    hide: true
+  timestamp:
+    hide: false
+  PivotTimeDiff:
+    hide: false
+  EventSource:
+    hide: false
+  hostname:
+    hide: false
+  EventSummary:
+    hide: false
+    flex: 1
+  username:
+    hide: false
+query: "//Network Connections to/from IP Addr\r\nlet _domain= extract(@'(https?\\://)?(.*?)(/.*|$)',2,\"{{domain}}\");\r\nlet _timestamp = datetime({{timestamp}});\r\n\r\nlet DomainOutboundNetwork = OutboundNetworkEvents\r\n| where url has _domain\r\n| extend EventId = hash_sha256(strcat(timestamp,method,src_ip,user_agent,url))\r\n| extend EventSummary = strcat(\"The host connected (outbound) to URL: \",url, \" at IP \",src_ip)\r\n| extend EventSource = \"OutboundNetworkEvents\"\r\n| extend RemoteUrl = url\r\n| extend IpAddr = src_ip;\r\nlet DomainEmail = Email\r\n| where link has _domain\r\n| extend EventId = hash_sha256(strcat(timestamp,sender,reply_to,subject,recipient,verdict,link))\r\n| extend EventSummary = strcat(\"The sender \",sender, \" sent email with subject '\",subject,\"' to recipient \",recipient,\". Verdict was \",verdict,\" on link: \",link)\r\n| extend EventSource = \"Email\"\r\n| extend RemoteUrl = link;\r\nlet DomainInboundNetwork = InboundNetworkEvents\r\n| where url has _domain\r\n| extend EventId = hash_sha256(strcat(timestamp,method,src_ip,user_agent,url))\r\n| extend EventSummary = strcat(\"The host connected (inbound) to URL: \",url, \" at IP \",src_ip)\r\n| extend EventSource = \"OutboundNetworkEvents\"\r\n| extend RemoteUrl = url\r\n| extend IpAddr = src_ip;\r\nlet DomainPassiveDns = PassiveDns\r\n| where domain has _domain\r\n| extend EventId = hash_sha256(strcat(timestamp,ip,domain))\r\n| extend EventSummary = strcat(\"Domain: \",domain,\" resolved to: \",ip)\r\n| extend EventSource = \"PassiveDns\"\r\n| extend RemoteUrl = domain\r\n| extend IpAddr = ip;\r\nunion DomainEmail, DomainInboundNetwork, DomainOutboundNetwork, DomainPassiveDns\r\n| project-reorder timestamp, EventSource, EventSummary, link\r\n| extend EventTime = timestamp\r\n| extend TimeDiff=datetime_diff('Millisecond', timestamp, _timestamp)/1000.0\r\n| extend PivotTimeDiff=TimeDiff * 1000 * 1ms\r\n| sort by timestamp asc"

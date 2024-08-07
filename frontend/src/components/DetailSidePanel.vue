@@ -74,7 +74,12 @@ export default {
       }, {});
     },
   },
-  mounted() {},
+  mounted() {
+    window.addEventListener('keydown', this.keydownhandler)
+  },
+  destroyed() {
+    window.removeEventListener('keydown', this.keydownhandler);
+  },
   methods: {
     yamlText: (data) => {
       if (!(typeof data === 'object')) {
@@ -92,6 +97,11 @@ export default {
           return value;
         },
       });
+    },
+    keydownhandler (event) {
+      if (event.key === 'Escape') {
+        this.$emit('close:side-panel');
+      }
     },
   },
 };

@@ -3,6 +3,8 @@
     :value="dialog"
     persistent
     max-width="800px"
+    eager
+    @keydown.esc="closeDialog"
   >
     <v-card>
       <v-card-title>
@@ -274,21 +276,33 @@ export default {
 
       try {
         this.query.fields = yaml.load(this.editorFields);
+        if (this.query.fields != null && (typeof this.query.fields !== 'object' || !Object.keys(this.query.fields).every(key => this.query.fields[key]?.hasOwnProperty('type')))) {
+          throw new Error('Check Fields YAML; Each field key must at least have type defined');
+        }
       } catch (err) {
+        console.error(err);
         hasError = true;
         this.errorEditorFields = err.message;
       }
 
       try {
         this.query.params = yaml.load(this.editorParams);
+        if (this.query.params != null && (typeof this.query.params !== 'object' || !Object.keys(this.query.params).every(key => this.query.params[key]?.hasOwnProperty('type')))) {
+          throw new Error('Check Params YAML; Each parameter key must at least have type defined');
+        }
       } catch (err) {
+        console.error(err);
         hasError = true;
         this.errorEditorParams = err.message;
       }
 
       try {
         this.query.columns = yaml.load(this.editorColumns);
+        if (this.query.columns != null && (typeof this.query.columns !== 'object' || !Object.keys(this.query.columns).every(key => this.query.columns[key] !== null))) {
+          throw new Error('Check Columns YAML; one or more YAML keys not converted to non-null object');
+        }
       } catch (err) {
+        console.error(err);
         hasError = true;
         this.errorEditorColumns = err.message;
       }
@@ -315,10 +329,11 @@ export default {
             icon: 'mdi-check',
           });
         } catch (err) {
-          this.creationError = err.response.data.error;
+          console.error(err);
+          this.creationError = err.response.data.errors;
 
           eventBus.$emit('show:snackbar', {
-            message: err.response.data.error,
+            message: this.creationError,
             color: 'error',
             icon: 'mdi-alert',
           });

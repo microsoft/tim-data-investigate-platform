@@ -1,17 +1,6 @@
 <template>
   <div>
     <div class="px-3 d-flex">
-      <NewQueryButton small text>
-        <v-icon left small>
-          mdi-plus
-        </v-icon>
-        New
-      </NewQueryButton>
-      <v-divider
-        vertical
-        style="height: 26px"
-        class="mr-2"
-      />
       <TimeSelection :time-range.sync="timeRange" />
       <v-divider
         vertical
@@ -40,7 +29,6 @@
         </v-icon>
         Clone
       </v-btn>
-      <v-divider vertical style="height: 26px" />
       <v-btn
         v-if="!editQuery"
         text
@@ -62,7 +50,7 @@
         <v-icon left small>
           mdi-play
         </v-icon>
-        Save Changes & Run
+        Save & Run
       </v-btn>
       <v-btn
         v-if="editQuery"
@@ -70,6 +58,9 @@
         small
         @click="onClickSaveQuery"
       >
+        <v-icon left small>
+          mdi-content-save
+        </v-icon>
         Save Changes
       </v-btn>
       <v-btn
@@ -78,13 +69,16 @@
         small
         @click="editQuery = false"
       >
+        <v-icon left small>
+          mdi-cancel
+        </v-icon>
         Cancel
       </v-btn>
     </div>
     <v-form
       v-if="editQuery && editParams"
       ref="form"
-      class="mx-2"
+      class="mx-3"
     >
       <v-text-field v-model="editTitle" label="Summary" />
       <ClusterSelection

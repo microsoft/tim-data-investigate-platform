@@ -1,5 +1,5 @@
 {
-    "bootstrap-sha": "bdce29e656c5f4e0be9132ce832ea46b7d93a194",
+    "bootstrap-sha": "02ad822a14e1a6cd75b87065061302672da46004",
     "packages": {
       ".": {
         "changelog-path": "CHANGELOG.md",

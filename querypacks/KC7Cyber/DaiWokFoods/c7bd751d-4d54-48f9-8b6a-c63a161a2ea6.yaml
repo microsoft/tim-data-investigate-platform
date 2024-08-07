@@ -1,0 +1,48 @@
+name: Host Timeline
+queryType: query
+menu: Timeline of host events
+summary: Device timeline for {{hostname}}
+path:
+  - Device
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params:
+  periodBefore:
+    default: 30d
+    type: string
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+  periodAfter:
+    default: 30d
+    type: string
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+fields:
+  hostname:
+    type: string
+    from: null
+    regex: null
+  timestamp:
+    type: datetime
+    from: null
+    regex: null
+columns:
+  default:
+    hide: true
+  timestamp:
+    hide: false
+  PivotTimeDiff:
+    hide: false
+  EventSource:
+    hide: false
+  EventSummary:
+    hide: false
+    flex: 1
+  username:
+    hide: false
+query: "{{> getTagEvents}}\r\n\r\nlet _hostname = \"{{hostname}}\";\r\nlet _timestamp = datetime({{timestamp}});\r\nlet _periodBefore = totimespan({{periodBefore}});\r\nlet _periodAfter = totimespan({{periodAfter}});\r\nlet HostProcessEvents = ProcessEvents\r\n| where timestamp between ((_timestamp-_periodBefore) .. (_timestamp+_periodAfter))\r\n| where hostname has _hostname\r\n| extend EventId = hash_sha256(strcat(parent_process_name, process_commandline, process_commandline, hostname, username, timestamp))\r\n| extend EventSummary = strcat(\"Parent process \", parent_process_name, \" created child process \", process_name, \" with commandline '\", process_commandline, \"'\")\r\n| extend EventSource = \"ProcessEvents\";\r\nlet HostFileEvents = FileCreationEvents\r\n| where timestamp between ((_timestamp-_periodBefore) .. (_timestamp+_periodAfter))\r\n| where hostname has _hostname\r\n| extend EventId = hash_sha256(strcat(path,filename,process_name, username, timestamp))\r\n| extend EventSummary = strcat(\"The process \", process_name,\" created the file \", path, \" under the account \", username)\r\n| extend EventSource = \"FileCreationEvents\";\r\nlet HostAuthenticationEvents = AuthenticationEvents\r\n| where timestamp between ((_timestamp-_periodBefore) .. (_timestamp+_periodAfter))\r\n| where hostname has _hostname\r\n| extend EventId = hash_sha256(strcat(timestamp, hostname, src_ip, user_agent, username, result, password_hash))\r\n| extend EventSummary = strcat(\"The user \", username, \" authenticated to \", hostname, \" with useragent: \",user_agent)\r\n| extend EventSource = \"AuthenticationEvents\"\r\n| extend IpAddr = src_ip;\r\nlet HostEmployees = Employees\r\n| where hostname has  _hostname\r\n| extend EventId = hash_sha256(strcat(timestamp,name,user_agent,ip_addr,email_addr,company_domain,username,role,hostname))\r\n| extend EventSummary = strcat(\"User \",username, \" was recorded with role: \",role, \", host: \", hostname, \" email : \", email_addr, \" and company : \",company_domain)\r\n| extend EventSoruce = \"Employees\"\r\n| extend IpAddr = ip_addr;\r\nlet HostSecurityAlerts = SecurityAlerts\r\n| where timestamp between ((_timestamp-_periodBefore) .. (_timestamp+_periodAfter))\r\n| extend EventId = hash_sha256(strcat(timestamp, description))\r\n| extend hostname = extract(\"[A-Z0-9]{4}-(DESKTOP|MACHINE|LAPTOP)\",0,description)\r\n| extend username = iif(alert_type has \"EMAIL\", extract(\"Employee ([a-z]+) reported\", 1, description), \"\")\r\n| where hostname has _hostname\r\n| extend EventSummary = description\r\n| extend EventSource = \"SecurityAlerts\";\r\nunion HostProcessEvents, HostFileEvents, HostAuthenticationEvents, HostEmployees, HostSecurityAlerts\r\n| project-reorder timestamp, EventSource, EventSummary\r\n| extend EventTime = timestamp\r\n| extend TimeDiff=datetime_diff('Millisecond', timestamp, _timestamp)/1000.0\r\n| extend PivotTimeDiff=TimeDiff * 1000 * 1ms\r\n| invoke getTagEvents()\r\n| sort by timestamp asc\r\n"

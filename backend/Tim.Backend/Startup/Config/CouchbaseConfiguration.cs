@@ -25,7 +25,7 @@ namespace Tim.Backend.Startup.Config
         /// Gets or sets and sets database client connection.
         /// </summary>
         [Required]
-        public string ConnectionString { get; set; } = Environment.GetEnvironmentVariable("COUCHBASE_CONNECT_STRING") ?? "couchbase://localhost";
+        public string ConnectionString { get; set; } = Environment.GetEnvironmentVariable("COUCHBASE_CONNECTION_STRING") ?? "couchbase://localhost";
 
         /// <summary>
         /// Gets or sets and Sets the Db user name for the database client connection.

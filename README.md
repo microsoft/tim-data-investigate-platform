@@ -1,34 +1,21 @@
-# Threat Investigation and Modeling (TIM) Platform
+# TIM
 
-TIM is a Kusto investigation platform that enables an analyst to quickly pivot between data sources; annotate their findings; and collaborate through shared queries (pivots) and centralized tagged events.
-
-*NOTE*: This project is under active development - please pardon our dust as we clean and polish TIM for our users.
+TIM is a Kusto investigation platform that enables an analyst to quickly pivot between data sources; annotate their findings; and promotes collaboration through shared queries (pivots) and centralized tagged events.
 
 ## Getting Started
 
+**If you are looking to setup TIM, please visit [GettingStarted](docs/GettingStarted.md) for the latest detailed deployment guide.**
+
 ### Docker Compose
 
-Download the docker compose YAML file.
+1. Download the docker compose YAML file.
 ```bash
 curl -LO https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/compose.yaml
 ```
 
-Download and modify the frontend configuration file.
-```bash
-curl -L https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/config.js.example -o config.js
-```
+2. Create or set the environment variables (refer to [Environment Variables](.docker/README.md#environment-variables)).
 
-Download and modify the backend configuration env file.
-```bash
-curl -L https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/.env.example -o .env
-```
-
-Download and modify (if required) the NGINX configuration file.
-```bash
-curl -LO https://github.com/microsoft/tim-data-investigate-platform/raw/main/.docker/nginx.conf
-```
-
-Run docker compose to download the latest images and deploy TIM locally.
+3. Run docker compose to download the latest images and deploy TIM locally.
 ```bash
 docker compose up
 ```

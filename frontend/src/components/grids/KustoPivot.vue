@@ -1,7 +1,44 @@
 <template>
   <v-container fluid>
-    <v-row class="py-0">
-      <v-col cols="7" class="py-1">
+    <v-divider class="mb-5"></v-divider>
+    <v-row class="py-0" justify="start">
+      <v-col class="py-1" cols="auto">
+        <!-- Button to scroll to TimeDiff 0 -->
+        <v-btn
+          :disabled="!isTimeDiffColumnPresent"
+          text
+          tile
+          title="Jump to TimeDiff 0"
+          @click="scrollToTimeDiffClosestToZero" 
+          icon size="small" 
+          variant="contained"
+        >
+          <v-icon small>mdi-clock-time-two-outline</v-icon>
+        </v-btn>
+        <!-- Button to scroll to Top -->
+        <v-btn 
+          text
+          tile
+          title="Jump to Top"
+          @click="scrollToTop"
+          icon size="small"
+          variant="contained"
+        >
+          <v-icon small>mdi-arrow-up</v-icon>
+        </v-btn>
+        <!-- Button to scroll to Bottom -->
+        <v-btn
+          text
+          tile
+          title="Jump to Bottom"
+          @click="scrollToBottom"
+          icon size="small"
+          variant="contained"
+        >
+          <v-icon small>mdi-arrow-down</v-icon>
+        </v-btn>
+      </v-col>
+      <v-col cols="2" class="py-1">
         <v-text-field
           v-model="quickFilterText"
           dense
@@ -10,7 +47,8 @@
           @input="onQuickFilter"
         />
       </v-col>
-      <v-col cols="5">
+      <v-spacer></v-spacer>
+      <v-col cols="3">
         <ColumnView
           :selected-uuid.sync="selectedColumnViewUuid"
           @apply-column-view="onApplyColumnView"
@@ -157,6 +195,9 @@ export default {
       }
       return {};
     },
+    isTimeDiffColumnPresent() {
+      return this.columnDefs.some((col) => (col.field?.toLowerCase() || '') === 'timediff');
+    },
   },
   watch: {
     rowDataTrigger() {
@@ -280,6 +321,26 @@ export default {
       'removeColumnView',
       'addColumnView',
     ]),
+    scrollToTop() {
+      this.gridApi.ensureIndexVisible(0, 'top'); // Scrolls to the first row
+    },
+    scrollToBottom() {
+      this.gridApi.ensureIndexVisible(this.gridApi.getDisplayedRowCount() - 1, 'bottom');
+    },
+    scrollToTimeDiffClosestToZero() {
+      let closestNode = null;
+      let smallestDifference = Infinity; // Start with the largest possible difference
+
+      this.gridApi.forEachNode(node => {
+        const difference = Math.abs(node.data.TimeDiff); // Calculate the absolute difference from 0
+        if (difference < smallestDifference) {
+          smallestDifference = difference; // Update the smallest difference
+          closestNode = node; // Update the closest node
+        }
+      });
+
+      this.gridApi.ensureNodeVisible(closestNode, 'middle'); // Scroll to the closest node
+    },
     async onApplyColumnView() {
       this.gridColumnApi.applyColumnState({
         state: this.getColumnViewState,
@@ -304,10 +365,20 @@ export default {
       }
 
       if (event.data?.TagEvent?.IsSaved !== true) {
+        eventBus.$emit('show:snackbar', {
+          message: `Warning: EventId must already be saved/tagged before adding a comment.`,
+          color: 'error',
+          icon: 'mdi-alert',
+        });
         return;
       }
 
       if (!event.data?.EventId || !event.data?.TagEvent?.Determination) {
+        eventBus.$emit('show:snackbar', {
+          message: `Warning: EventId must already be saved/tagged before adding a comment.`,
+          color: 'error',
+          icon: 'mdi-alert',
+        });
         return;
       }
 
@@ -423,7 +494,7 @@ export default {
 
           eventBus.$emit('create:tag-event-dialog', {
             events: rows,
-            onSuccess: () => {
+            onSuccess: (rows) => {
               this.gridApi.applyTransaction({ update: rows });
               this.gridApi.deselectAll();
             },
@@ -515,7 +586,7 @@ export default {
     },
     showDetailsMenuItem() {
       return {
-        name: 'Show details',
+        name: 'Show Details',
         action: (params) => {
           eventBus.$emit('show:detail-side-panel', params.node.data);
         },
@@ -552,6 +623,9 @@ export default {
           });
         },
         path: queryTemplate.path,
+        checked: (params) => {
+            return queryTemplate.validateData(params.node.data, this.getMultidataFromSelected(params.node.data));
+          },
       };
     },
     setupColumns() {

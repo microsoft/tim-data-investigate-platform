@@ -8,11 +8,13 @@ export default Object.freeze({
   redirectUri: import.meta.env.VITE_AUTH_REDIRECT,
   apiEndpoint: import.meta.env.VITE_API_ENDPOINT,
   agGridLicenseKey: import.meta.env.VITE_AGGRID_LICENSE_KEY,
-  wikiUri: import.meta.env.VITE_HELP_WIKI_URI || 'https://github.com/microsoft/tim-data-investigate-platform/wiki',
-  issueUri: import.meta.env.VITE_HELP_ISSUE_URI || 'https://github.com/microsoft/tim-data-investigate-platform/issues/new?template=issue_template.md',
+  homeUri: import.meta.env.HELP_HOME_URI || 'https://github.com/microsoft/tim-data-investigate-platform',
+  wikiUri: import.meta.env.HELP_WIKI_URI || 'https://github.com/microsoft/tim-data-investigate-platform/wiki',
+  issueUri: import.meta.env.HELP_ISSUE_URI || 'https://github.com/microsoft/tim-data-investigate-platform/issues/new?template=issue_template.md',
+  featureUri: import.meta.env.HELP_FEATURE_URI || 'https://github.com/microsoft/tim-data-investigate-platform/issues/new?template=issue_template.md',
   nodeEnv: import.meta.env.NODE_ENV || 'production',
   tagCluster: import.meta.env.TAG_CLUSTER,
-  tagDatabase: import.meta.env.TAG_DATABASE || 'Research',
+  tagDatabase: import.meta.env.TAG_DATABASE || 'tim-dev-adx-db',
   defaultClusters: [
     {
       name: 'Example',

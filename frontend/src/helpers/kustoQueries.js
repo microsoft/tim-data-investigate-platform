@@ -5,13 +5,13 @@ const getTagEvents = `
 let getTagEvents=(T:(EventId:string)) { 
   let EventIds=materialize(T | distinct EventId);
   let Events=EventIds
-  | join kind=leftouter (
+  | lookup (
     cluster('${runtimeConfig.tagCluster}').database('${runtimeConfig.tagDatabase}').SavedEvent
     | where EventId in (EventIds)
     | summarize arg_max(DateTimeUtc, *) by EventId
-    | project EventId, IsSaved=true
+    | project EventId
   ) on EventId
-  | join kind=leftouter (
+  | lookup (
     cluster('${runtimeConfig.tagCluster}').database('${runtimeConfig.tagDatabase}').EventTag
     | where EventId in (EventIds)
     | summarize arg_max(DateTimeUtc, IsDeleted) by EventId, Tag
@@ -19,7 +19,7 @@ let getTagEvents=(T:(EventId:string)) {
     | summarize Tags=make_set(Tag) by EventId
     | project EventId, Tags
   ) on EventId
-  | join kind=leftouter (
+  | lookup (
     cluster('${runtimeConfig.tagCluster}').database('${runtimeConfig.tagDatabase}').EventComment
     | where EventId in (EventIds)
     | sort by DateTimeUtc desc
@@ -27,9 +27,8 @@ let getTagEvents=(T:(EventId:string)) {
       Comments=make_list(pack("CreatedBy", CreatedBy, "Comment", Comment, "Determination", Determination, "DateTimeUtc", DateTimeUtc)) 
       by EventId
     | where not(IsDeleted)
-    | project EventId, Determination, Comment, Comments
+    | project EventId, Determination, Comment, Comments, IsSaved=true
   ) on EventId
-  | project-away EventId1, EventId2, EventId3
   | extend TagEvent=pack_all()
   | project EventId, TagEvent;
   T
@@ -39,6 +38,8 @@ let getTagEvents=(T:(EventId:string)) {
 `;
 Handlebars.registerPartial('getTagEvents', getTagEvents);
 Handlebars.registerHelper('array', (items) => items?.map((item) => `@'${item}'`).join(','));
+Handlebars.registerHelper('tagCluster', runtimeConfig.tagCluster);
+Handlebars.registerHelper('tagDatabase', runtimeConfig.tagDatabase);
 
 // eslint-disable-next-line import/prefer-default-export
 export class QueryTemplate {
@@ -76,21 +77,21 @@ export class QueryTemplate {
     }
 
     return Object.keys(this.fields).every((fieldName) => {
-      if (this.fields[fieldName].type === 'multiple') {
+      if (this.fields[fieldName]?.type === 'multiple') {
         const fieldFrom = this.fields[fieldName].from;
         return (
-          multipleData.length > 0
-          && multipleData.every(
+          multipleData?.length > 0
+          && multipleData.some(
             (e) => fieldFrom in e && e[fieldFrom] !== null && e[fieldFrom] !== '',
           )
         );
-      } if (this.fields[fieldName].type === 'match') {
+      } if (this.fields[fieldName]?.type === 'match') {
         const regex = new RegExp(this.fields[fieldName].regex);
         return Object.keys(data).some(
           (col) => regex.test(col) && data[col] !== null && data[col] !== '',
         );
       }
-      return fieldName in data;
+      return fieldName in data && data[fieldName] !== null && data[fieldName] !== '';
     });
   }
 
@@ -100,10 +101,10 @@ export class QueryTemplate {
     }
 
     return Object.keys(this.fields).every((fieldName) => {
-      if (this.fields[fieldName].type === 'multiple') {
+      if (this.fields[fieldName]?.type === 'multiple') {
         return data[fieldName]?.length > 0;
-      } if (this.fields[fieldName].type === 'match') {
-        return data[fieldName]?.length === 1;
+      } if (this.fields[fieldName]?.type === 'match') {
+        return typeof data[fieldName] === 'string' || data[fieldName]?.length === 1;
       }
       return (
         fieldName in data && data[fieldName] !== null && data[fieldName] !== ''
@@ -118,17 +119,22 @@ export class QueryTemplate {
       return obj;
     }, {});
     Object.keys(this.fields).forEach((fieldName) => {
-      if (this.fields[fieldName].type === 'multiple') {
+      if (this.fields[fieldName]?.type === 'multiple') {
         newParams[fieldName] = multipleData
           .map((e) => e[this.fields[fieldName].from] ?? '')
           .filter((e) => e !== null && e !== '');
-      } else if (this.fields[fieldName].type === 'match') {
+      } else if (this.fields[fieldName]?.type === 'match') {
         const regex = new RegExp(this.fields[fieldName].regex);
-        newParams[fieldName] = Object.keys(data)
+        const filteredResults = Object.keys(data)
           .filter(
-            (col) => regex.test(col) && data[col] !== null && data[col] !== '',
-          )
-          .map((col) => ({ column: col, value: data[col] }));
+            (col) => regex.test(col) && data[col] !== null && data[col] !== '',);
+          if (filteredResults?.length === 1) {
+            // If only one element passes the regex test, set `newParams` to that element's string value to automatically populate the field
+            newParams[fieldName] = data[filteredResults[0]];
+          } else {
+              newParams[fieldName] = filteredResults.map((col) => ({ column: col, value: data[col] }));
+          }
+      
       } else {
         newParams[fieldName] = data[fieldName] ?? '';
       }
@@ -138,6 +144,11 @@ export class QueryTemplate {
 
   buildCluster(params) {
     const template = Handlebars.compile(this.cluster, { noEscape: true });
+    return template(params);
+  }
+
+  buildDatabase(params) {
+    const template = Handlebars.compile(this.database, { noEscape: true });
     return template(params);
   }
 

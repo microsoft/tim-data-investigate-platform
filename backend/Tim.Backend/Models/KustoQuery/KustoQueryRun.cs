@@ -11,6 +11,7 @@ namespace Tim.Backend.Models.KustoQuery
     using MongoDB.Bson.Serialization.Attributes;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
+    using Tim.Backend.Providers.Helpers;
 
     /// <summary>
     /// Query Run states.
@@ -107,10 +108,10 @@ namespace Tim.Backend.Models.KustoQuery
         /// Gets or sets the result data as a JSON string for databases without proper support.
         /// </summary>
         [JsonIgnore]
-        public string ResultDataAsString
+        public byte[] ResultDataAsString
         {
-            get => JsonConvert.SerializeObject(ResultData);
-            set => ResultData = JsonConvert.DeserializeObject<IEnumerable<IDictionary<string, object>>>(value);
+            get => ResultData.ObjectToByteArray();
+            set => ResultData = value.ObjectFromByteArray<IEnumerable<IDictionary<string, object>>>();
         }
 
         /// <summary>

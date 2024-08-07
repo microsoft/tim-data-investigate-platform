@@ -1,0 +1,73 @@
+name: All tagged events
+queryType: view
+menu: Show tagged events
+summary: Tagged events view
+path:
+  - Tagged Events
+cluster: '{{tagCluster}}'
+database: '{{tagDatabase}}'
+columnId: EventId
+params:
+  startTime:
+    default: ago(30d)
+    type: datetime
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+  endTime:
+    default: now()
+    type: datetime
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+  limit:
+    default: 50000
+    type: number
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+  tags:
+    default: null
+    type: multiple
+    optional: true
+    multiple: null
+    hint: null
+    values: null
+  deviceNames:
+    default: null
+    type: multiple
+    optional: true
+    multiple: null
+    hint: insert devicenames(s) to filter on
+    values: null
+  searchText:
+    default: null
+    type: string
+    optional: true
+    multiple: null
+    hint: Supports regex e.g. (?i)cmd\.exe /[QR]
+    values: null
+fields: null
+columns:
+  default:
+    hide: true
+  EventTime:
+    hide: false
+  hostname:
+    hide: false
+  TagEvent.Comment:
+    wrapText: true
+    autoHeight: true
+    flex: 1
+  EventSource:
+    hide: false
+  EventSummary:
+    wrapText: true
+    autoHeight: true
+    flex: 2
+  TagEvent.Tags:
+    hide: false
+query: "  // --- Parameters ---\r\n  let _startTime={{startTime}};\r\n  let _endTime={{endTime}};\r\n  let _limit={{limit}};\r\n  let _searchText=@'{{searchText}}';\r\n  {{#if deviceNames}}\r\n  let _deviceNames=pack_array({{array deviceNames}});\r\n  {{/if}}\r\n  {{#if tags}}\r\n  let _tags=pack_array({{array tags}});\r\n  {{/if}}\r\n  \r\n  // --- Main Query ---\r\n  EventComment\r\n  | where DateTimeUtc between (_startTime .. _endTime)\r\n  | sort by DateTimeUtc desc\r\n  | summarize arg_max(DateTimeUtc, Determination, IsDeleted, Comment),\r\n      Comments=make_list(pack(\"CreatedBy\", CreatedBy, \"Comment\", Comment, \"Determination\", Determination, \"DateTimeUtc\", DateTimeUtc))\r\n      by EventId\r\n  | where not(IsDeleted)\r\n  | project EventId, Determination, Comment, Comments\r\n  | take _limit\r\n  | join kind=leftouter (\r\n      SavedEvent\r\n      | where DateTimeUtc between (_startTime .. _endTime)\r\n      | summarize arg_max(DateTimeUtc, *) by EventId\r\n      | project EventTime, EventId, EventAsJson, IsSaved=true\r\n      | take _limit\r\n  ) on EventId\r\n  | join kind=leftouter (\r\n      EventTag\r\n      | where DateTimeUtc between (_startTime .. _endTime)\r\n      | summarize arg_max(DateTimeUtc, IsDeleted) by EventId, Tag\r\n      | where not(IsDeleted)\r\n      | summarize Tags=make_set(Tag) by EventId\r\n      | project EventId, Tags\r\n  ) on EventId\r\n  | project-away EventId1, EventId2\r\n  | extend TagEvent=bag_remove_keys(pack_all(), dynamic(['EventId', 'EventTime', 'EventAsJson']))\r\n  {{#if tags}}\r\n  | where Tags has_any (_tags)\r\n  {{/if}}\r\n  | project EventId, EventTime, TagEvent, EventAsJson\r\n  | evaluate bag_unpack(EventAsJson, columnsConflict='keep_source')\r\n  {{#if deviceNames}}\r\n  | where DeviceName has_any (_deviceNames) or tostring(split('{{DeviceName}}', '.')[0]) has_any (_deviceNames)\r\n  {{/if}}\r\n  {{#if searchText}}\r\n  | where * matches regex _searchText\r\n  {{/if}}\r\n  | take _limit\r\n  | order by EventTime asc"

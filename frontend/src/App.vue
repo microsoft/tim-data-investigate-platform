@@ -13,6 +13,9 @@
           </template>
 
           <v-list>
+            <v-list-item>
+              <NewQueryButton> Run New Query </NewQueryButton>
+            </v-list-item>
             <v-list-item to="/queries">
               <v-list-item-content class="text-no-wrap">
                 Query Manager
@@ -42,6 +45,16 @@
 
           <v-list>
             <v-list-item
+              :href="homeUri"
+              target="_blank"
+            >
+              <v-list-item-title>TIM Home</v-list-item-title>
+              <v-list-item-icon>
+                <v-icon>mdi-home</v-icon>
+              </v-list-item-icon>
+            </v-list-item>
+
+            <v-list-item
               :href="wikiUri"
               target="_blank"
             >
@@ -55,9 +68,19 @@
               :href="issueUri"
               target="_blank"
             >
-              <v-list-item-title>Report a bug</v-list-item-title>
+              <v-list-item-title>Report Bug</v-list-item-title>
               <v-list-item-icon>
                 <v-icon>mdi-bug</v-icon>
+              </v-list-item-icon>
+            </v-list-item>
+            
+            <v-list-item
+              :href="featureUri"
+              target="_blank"
+            >
+              <v-list-item-title>Request Feature</v-list-item-title>
+              <v-list-item-icon>
+                <v-icon>mdi-plus-thick</v-icon>
               </v-list-item-icon>
             </v-list-item>
           </v-list>
@@ -152,6 +175,7 @@ import DefaultSnackbar from '@/components/DefaultSnackbar.vue';
 import eventBus from '@/helpers/eventBus';
 import { BrowserAuthError } from '@azure/msal-browser';
 import runtimeConfig from '@/helpers/runtimeConfig';
+import NewQueryButton from '@/components/NewQueryButton.vue';
 
 export default {
   name: 'App',
@@ -172,6 +196,12 @@ export default {
     },
     issueUri() {
       return runtimeConfig.issueUri;
+    },
+    homeUri() {
+      return runtimeConfig.homeUri;
+    },
+    featureUri() {
+      return runtimeConfig.featureUri;
     },
   },
   mounted() {

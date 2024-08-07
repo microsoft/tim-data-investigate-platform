@@ -1,0 +1,18 @@
+name: Users/devices assigned with IP address
+queryType: query
+menu: Show users/devices assigned this IP address
+summary: Users/devices assigned IP address {{IpAddr}}
+path:
+  - Network
+  - IP Address
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params: null
+fields:
+  IpAddr:
+    type: string
+    from: null
+    regex: null
+columns: null
+query: "let _IpAddr = \"{{IpAddr}}\";\r\nEmployees\r\n| where ip_addr == _IpAddr\r\n| summarize arg_max(timestamp, *) by username\r\n| extend IpAddr = ip_addr\r\n//| evaluate narrow()\r\n//| project-away Row\r\n"

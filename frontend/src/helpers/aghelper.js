@@ -2,6 +2,16 @@
 export const createMenuContext = (items, params, ignoreCondition = false) => {
   const menu = [];
   const lookup = {};
+  // Propagate checked status up the menu hierarchy
+  const propagateCheckedStatus = (key) => {
+    const parts = key.split('-');
+    parts.pop(); // Remove the last part to get the parent key
+    const parentKey = parts.join('-');
+    if (parentKey && lookup[parentKey]) {
+      lookup[parentKey].checked = true;
+      propagateCheckedStatus(parentKey); // Recursively propagate up
+    }
+  };
 
   items.forEach((item) => {
     if (typeof item === 'string') {
@@ -39,5 +49,15 @@ export const createMenuContext = (items, params, ignoreCondition = false) => {
       parentMenu.push(obj);
     }
   });
+
+  // Check each sub-menu item and propagate checked status if necessary
+  Object.keys(lookup).forEach((key) => {
+    const subMenu = lookup[key].subMenu;
+    if (subMenu.some(item => item.checked)) {
+      lookup[key].checked = true; // Mark the current menu item as checked
+      propagateCheckedStatus(key); // Propagate up the hierarchy
+    }
+  });
+
   return menu;
 };

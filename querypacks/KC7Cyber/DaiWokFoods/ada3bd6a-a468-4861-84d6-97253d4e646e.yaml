@@ -1,0 +1,22 @@
+name: IP Timeline
+queryType: query
+menu: Show all events for IP address
+summary: Timeline for IP address {{IpAddr}}
+path:
+  - Network
+  - IP Address
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params: null
+fields:
+  IpAddr:
+    type: string
+    from: null
+    regex: null
+  timestamp:
+    type: datetime
+    from: null
+    regex: null
+columns: null
+query: "{{> getTagEvents}}\r\n\r\nlet _ipaddr= \"{{IpAddr}}\";\r\nlet _timestamp = datetime({{timestamp}});\r\n\r\nlet IPOutboundNetwork = OutboundNetworkEvents\r\n| where assert(_ipaddr !has 'object Object', \"Multiple suitable values found; Please Select an IP Address for the RemoteIP parameter and Re-Run\")\r\n| where src_ip has _ipaddr\r\n| extend EventId = hash_sha256(strcat(timestamp,method,src_ip,user_agent,url))\r\n| extend EventSummary = strcat(\"The host with source IP \", src_ip, \" connected (outbound) to URL: \",url)\r\n| extend EventSource = \"OutboundNetworkEvents\"\r\n| extend RemoteUrl = url\r\n| extend IpAddr = src_ip;\r\nlet IPInboundNetwork = InboundNetworkEvents\r\n| where src_ip has _ipaddr\r\n| extend EventId = hash_sha256(strcat(timestamp,method,src_ip,user_agent,url))\r\n| extend EventSummary = strcat(\"The host connected (inbound) to URL: \",url, \" at IP \",src_ip)\r\n| extend EventSource = \"OutboundNetworkEvents\"\r\n| extend RemoteUrl = url\r\n| extend IpAddr = src_ip;\r\nlet IPAuthenticationEvents = AuthenticationEvents\r\n| where src_ip has _ipaddr\r\n| extend EventId = hash_sha256(strcat(timestamp, hostname, src_ip, user_agent, username, result, password_hash))\r\n| extend EventSummary = strcat(\"The user \", username, \" authenticated to \", hostname, \" with useragent: \",user_agent)\r\n| extend EventSource = \"AuthenticationEvents\"\r\n| extend IpAddr = src_ip;\r\nlet IPPassiveDns = PassiveDns\r\n| where ip has _ipaddr\r\n| extend EventId = hash_sha256(strcat(timestamp,ip,domain))\r\n| extend EventSummary = strcat(\"Domain: \",domain,\" resolved to: \",ip)\r\n| extend EventSource = \"PassiveDns\"\r\n| extend RemoteUrl = domain\r\n| extend IpAddr = ip;\r\nunion IPInboundNetwork, IPOutboundNetwork, IPAuthenticationEvents, IPPassiveDns\r\n| project-reorder timestamp, EventSource, EventSummary\r\n| extend EventTime = timestamp\r\n| extend TimeDiff=datetime_diff('Millisecond', timestamp, _timestamp)/1000.0\r\n| extend PivotTimeDiff=TimeDiff * 1000 * 1ms\r\n| invoke getTagEvents()\r\n| sort by timestamp asc"

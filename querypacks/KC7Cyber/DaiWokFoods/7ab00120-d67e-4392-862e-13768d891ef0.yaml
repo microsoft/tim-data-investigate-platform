@@ -1,0 +1,28 @@
+name: Security Alerts Dashboard
+queryType: view
+menu: Show all security alerts
+summary: This shows a dashboard for all security alerts
+path:
+  - Dashboards
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: AlertId
+params: null
+fields: null
+columns:
+  default:
+    hide: true
+  timestamp:
+    hide: false
+  alert_type:
+    hide: false
+  severity:
+    hide: false
+  description:
+    hide: false
+    flex: 1
+  hostname:
+    hide: false
+  username:
+    hide: false
+query: "{{> getTagEvents}}\r\n\r\nSecurityAlerts\r\n| extend EventId = hash_sha256(strcat(timestamp, description))\r\n| extend EventSummary = description\r\n| extend EventTime = timestamp\r\n| extend EventSource = \"SecurityAlerts\"\r\n| extend hostname = extract(\"[A-Z0-9]{4}-(DESKTOP|MACHINE|LAPTOP)\",0,description)\r\n| extend username = iif(alert_type has \"EMAIL\", extract(\"Employee ([a-z]+) reported\", 1, description), \"\")\r\n| extend subject = iif(alert_type has \"EMAIL\", extract('with the subject \"(.*?)\"', 1, description), \"\")\r\n| invoke getTagEvents()\r\n| sort by timestamp asc"

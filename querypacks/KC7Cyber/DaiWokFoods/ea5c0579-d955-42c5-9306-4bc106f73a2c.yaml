@@ -1,0 +1,35 @@
+name: Emails sent to or from username
+queryType: query
+menu: Show all emails sent to or from this username
+summary: Emails sent to/from user {{username}}
+path:
+  - User
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params:
+  periodBefore:
+    default: 30d
+    type: string
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+  periodAfter:
+    default: 30d
+    type: string
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+fields:
+  username:
+    type: string
+    from: null
+    regex: null
+  timestamp:
+    type: datetime
+    from: null
+    regex: null
+columns: null
+query: "{{> getTagEvents}}\r\n\r\nlet _username = \"{{username}}\";\r\nlet _timestamp = datetime({{timestamp}});\r\nlet _periodBefore = totimespan({{periodBefore}});\r\nlet _periodAfter = totimespan({{periodAfter}});\r\nlet user_email = toscalar(Employees \r\n  | where username =~ _username | project email_addr);\r\nEmail\r\n| where timestamp between ((_timestamp-_periodBefore) .. (_timestamp+_periodAfter))\r\n| where \r\n  sender has user_email or recipient has user_email\r\n| extend EventId = hash_sha256(strcat(timestamp,sender,reply_to,subject,recipient,verdict,link))\r\n| extend EventSummary = strcat(\"The sender \",sender, \" sent email with subject '\",subject,\"' to recipient \",recipient,\". Verdict was \",verdict,\" on link: \",link)\r\n| extend EventSource = \"Email\"\r\n| extend EventTime = timestamp\r\n| extend RemoteUrl = link\r\n| extend TimeDiff=datetime_diff('Millisecond', timestamp, _timestamp)/1000.0\r\n| extend PivotTimeDiff=TimeDiff * 1000 * 1ms\r\n| invoke getTagEvents()\r\n| sort by timestamp asc"

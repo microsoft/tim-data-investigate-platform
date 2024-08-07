@@ -25,13 +25,13 @@ namespace Tim.Backend.Models.KustoQuery
         /// Gets or sets start time for query to be executed.
         /// </summary>
         [JsonProperty("startTime")]
-        public DateTime StartTime { get; set; }
+        public DateTime? StartTime { get; set; }
 
         /// <summary>
         /// Gets or sets the end time for query to be executed.
         /// </summary>
         [JsonProperty("endTime")]
-        public DateTime EndTime { get; set; }
+        public DateTime? EndTime { get; set; }
 
         /// <summary>
         /// Gets or sets the query.

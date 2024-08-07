@@ -1,0 +1,22 @@
+name: User Agent Timeline
+queryType: query
+menu: Shows all events with user agent
+summary: Timeline for user agent {{user_agent}}
+path:
+  - Network
+  - User Agent
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params: null
+fields:
+  user_agent:
+    type: string
+    from: null
+    regex: null
+  timestamp:
+    type: datetime
+    from: null
+    regex: null
+columns: null
+query: "{{> getTagEvents}}\r\n\r\nlet _useragent= \"{{user_agent}}\";\r\nlet _timestamp = datetime({{timestamp}});\r\n\r\nlet UAOutboundNetwork = OutboundNetworkEvents\r\n| where user_agent has _useragent\r\n| extend EventId = hash_sha256(strcat(timestamp,method,src_ip,user_agent,url))\r\n| extend EventSummary = strcat(\"The host with source IP \", src_ip, \" connected (outbound) to URL: \",url)\r\n| extend EventSource = \"OutboundNetworkEvents\"\r\n| extend RemoteUrl = url\r\n| extend IpAddr = src_ip;\r\nlet UAInboundNetwork = InboundNetworkEvents\r\n| where user_agent has _useragent\r\n| extend EventId = hash_sha256(strcat(timestamp,method,src_ip,user_agent,url))\r\n| extend EventSummary = strcat(\"The host connected (inbound) to URL: \",url, \" at IP \",src_ip)\r\n| extend EventSource = \"OutboundNetworkEvents\"\r\n| extend RemoteUrl = url\r\n| extend IpAddr = src_ip;\r\nlet UAAuthenticationEvents = AuthenticationEvents\r\n| where user_agent has _useragent\r\n| extend EventId = hash_sha256(strcat(timestamp, hostname, src_ip, user_agent, username, result, password_hash))\r\n| extend EventSummary = strcat(\"The user \", username, \" authenticated to \", hostname, \" with useragent: \",user_agent)\r\n| extend EventSource = \"AuthenticationEvents\"\r\n| extend IpAddr = src_ip;\r\nunion UAInboundNetwork, UAOutboundNetwork, UAAuthenticationEvents\r\n| project-reorder timestamp, EventSource, EventSummary\r\n| extend EventTime = timestamp\r\n| extend TimeDiff=datetime_diff('Millisecond', timestamp, _timestamp)/1000.0\r\n| extend PivotTimeDiff=TimeDiff * 1000 * 1ms\r\n| invoke getTagEvents()\r\n| sort by timestamp asc"

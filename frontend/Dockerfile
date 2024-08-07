@@ -1,6 +1,6 @@
-ARG BUILD_VERSION=community
+ARG BUILD_VERSION=enterprise
 
-FROM node:16-alpine AS dependency
+FROM node:22-alpine AS dependency
 
 RUN apk add --no-cache python3 make g++
 

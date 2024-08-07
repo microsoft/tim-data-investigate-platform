@@ -1,0 +1,49 @@
+name: Emails with the same sender, subject, or links
+queryType: query
+menu: Show all email with this same sender, subject, reply_to, or links
+summary: >-
+  Emails with sender {{sender}}, reply_to {{reply_to}}, subject {{subject}}, or
+  link {{link}}
+path:
+  - Email
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params:
+  periodBefore:
+    default: 30d
+    type: string
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+  periodAfter:
+    default: 30d
+    type: string
+    optional: null
+    multiple: null
+    hint: null
+    values: null
+fields:
+  sender:
+    type: string
+    from: null
+    regex: null
+  subject:
+    type: string
+    from: null
+    regex: null
+  link:
+    type: string
+    from: null
+    regex: null
+  reply_to:
+    type: string
+    from: null
+    regex: null
+  timestamp:
+    type: datetime
+    from: null
+    regex: null
+columns: null
+query: "{{> getTagEvents}}\r\n\r\nlet _sender = \"{{sender}}\";\r\nlet _subject = \"{{subject}}\";\r\nlet _link = \"{{link}}\";\r\nlet _reply_to = \"{{reply_to}}\";\r\n\r\nlet _timestamp = datetime({{timestamp}});\r\nlet _periodBefore = totimespan({{periodBefore}});\r\nlet _periodAfter = totimespan({{periodAfter}});\r\nEmail\r\n| where timestamp between ((_timestamp-_periodBefore) .. (_timestamp+_periodAfter))\r\n| where \r\n  sender =~ _sender or\r\n  subject =~ _subject or\r\n  link =~ _link or\r\n  reply_to =~ _reply_to\r\n| extend EventId = hash_sha256(strcat(timestamp,sender,reply_to,subject,recipient,verdict,link))\r\n| extend EventSummary = strcat(\"The sender \",sender, \" sent email with subject '\",subject,\"' to recipient \",recipient,\". Verdict was \",verdict,\" on link: \",link)\r\n| extend EventSource = \"Email\"\r\n| extend EventTime = timestamp\r\n| extend RemoteUrl = link\r\n| extend TimeDiff=datetime_diff('Millisecond', timestamp, _timestamp)/1000.0\r\n| extend PivotTimeDiff=TimeDiff * 1000 * 1ms\r\n| invoke getTagEvents()\r\n| sort by timestamp asc"

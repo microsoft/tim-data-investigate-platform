@@ -14,6 +14,7 @@
         text
         icon
         tile
+        title="Run New Query"
       >
         <v-icon>mdi-plus</v-icon>
       </NewQueryButton>
@@ -26,6 +27,17 @@
         @click="onClickReloadTemplates"
       >
         <v-icon>mdi-refresh</v-icon>
+      </v-btn>
+      <v-divider vertical style="height: 18px" />
+      <v-btn
+        :disabled="getRootDisplayComponents.length == 0"
+        text
+        icon
+        tile
+        title="Select All"
+        @click="onSelectAll"
+      >
+      <v-icon>{{ allSelected ? 'mdi-checkbox-marked-outline' : 'mdi-checkbox-blank-outline' }}</v-icon>
       </v-btn>
       <v-divider vertical style="height: 18px" />
       <v-btn
@@ -119,6 +131,7 @@ export default {
   },
   data() {
     return {
+      allSelected: false,
       isNavClosed: true,
       activeUuid: null,
       tree: [],
@@ -182,6 +195,16 @@ export default {
           this.$router.push({ name: 'OpenTriage', params: { uuid } });
         }
       }
+    },
+    onSelectAll() {
+      this.allSelected = !this.allSelected
+
+      if (this.allSelected) {
+        this.getRootDisplayComponents.forEach(displayComponent => {
+          this.tree.push(displayComponent.componentUuid)});
+      } else {
+        this.tree = []
+        }
     },
     onClickRemoveSelected() {
       this.removeAllDisplayComponents({ uuidArray: this.tree });

@@ -1,0 +1,17 @@
+name: User Information
+queryType: query
+menu: Show user information
+summary: User information for {{username}}
+path:
+  - User
+cluster: https://kc7001.eastus.kusto.windows.net/
+database: DaiWokFoods
+columnId: EventId
+params: null
+fields:
+  username:
+    type: string
+    from: null
+    regex: null
+columns: null
+query: "let _username = \"{{username}}\";\r\nlet _parsedUserInput = split(_username, '@')[0];\r\nEmployees\r\n| where username has _username\r\n| summarize arg_max(timestamp, *) by username\r\n| extend IpAddr = ip_addr\r\n//| evaluate narrow()\r\n//| project-away Row\r\n"

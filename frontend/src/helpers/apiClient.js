@@ -9,7 +9,7 @@ export const queryCreate = async (query) => {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  await axios.post(`${runtimeConfig.apiEndpoint}templates/queries`, query, {
+  await axios.post(`${runtimeConfig.apiEndpoint}api/templates/queries`, query, {
     headers,
   });
 };
@@ -21,7 +21,7 @@ export const queryDelete = async (id) => {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  await axios.delete(`${runtimeConfig.apiEndpoint}templates/queries/${id}`, {
+  await axios.delete(`${runtimeConfig.apiEndpoint}api/templates/queries/${id}`, {
     headers,
   });
 };
@@ -34,7 +34,7 @@ export const queryRestore = async (id) => {
   };
 
   await axios.patch(
-    `${runtimeConfig.apiEndpoint}templates/queries/${id}`,
+    `${runtimeConfig.apiEndpoint}api/templates/queries/${id}`,
     [{ op: 'replace', path: '/isDeleted', value: false }],
     { headers },
   );
@@ -48,7 +48,7 @@ export const queryRetrieve = async () => {
   };
 
   const res = await axios.get(
-    `${runtimeConfig.apiEndpoint}templates/queries?includeDeleted=true`,
+    `${runtimeConfig.apiEndpoint}api/templates/queries?includeDeleted=true`,
     { headers },
   );
   return res.data;
@@ -62,7 +62,7 @@ export const queryRetrieveById = async (id) => {
   };
 
   const res = await axios.get(
-    `${runtimeConfig.apiEndpoint}templates/queries/${id}`,
+    `${runtimeConfig.apiEndpoint}api/templates/queries/${id}`,
     { headers },
   );
   return res.data;
@@ -75,7 +75,7 @@ export const queryUpdate = async (id, query) => {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  await axios.put(`${runtimeConfig.apiEndpoint}templates/queries/${id}`, query, {
+  await axios.put(`${runtimeConfig.apiEndpoint}api/templates/queries/${id}`, query, {
     headers,
   });
 };
@@ -100,7 +100,7 @@ export const executeQuery = async (
     ...additionalParameters,
   };
 
-  return axios.post(`${runtimeConfig.apiEndpoint}kusto/query`, body, {
+  return axios.post(`${runtimeConfig.apiEndpoint}api/kusto/query`, body, {
     headers,
   });
 };
@@ -113,7 +113,7 @@ export const getQueryResult = async (queryRunId) => {
   };
 
   return axios.get(
-    `${runtimeConfig.apiEndpoint}kusto/query/${queryRunId}`,
+    `${runtimeConfig.apiEndpoint}api/kusto/query/${queryRunId}`,
     { headers },
   );
 };
@@ -133,7 +133,7 @@ export const getKustoSchema = async (
     database,
   };
 
-  return axios.post(`${runtimeConfig.apiEndpoint}kusto/schema`, body, {
+  return axios.post(`${runtimeConfig.apiEndpoint}api/kusto/schema`, body, {
     headers,
   });
 };
@@ -157,7 +157,7 @@ export const saveEvents = async (events) => {
   }));
 
   return axios.post(
-    `${runtimeConfig.apiEndpoint}taggedevents/savedEvents`,
+    `${runtimeConfig.apiEndpoint}api/taggedevents/savedEvents`,
     data,
     { headers },
   );
@@ -182,7 +182,7 @@ export const createTags = async (tags) => {
   }));
 
   return axios.post(
-    `${runtimeConfig.apiEndpoint}taggedevents/tags`,
+    `${runtimeConfig.apiEndpoint}api/taggedevents/tags`,
     data,
     { headers },
   );
@@ -208,7 +208,7 @@ export const createComments = async (comments) => {
   }));
 
   return axios.post(
-    `${runtimeConfig.apiEndpoint}taggedevents/comments`,
+    `${runtimeConfig.apiEndpoint}api/taggedevents/comments`,
     data,
     { headers },
   );

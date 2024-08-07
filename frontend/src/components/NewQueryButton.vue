@@ -11,6 +11,7 @@
         :small="small"
         :icon="icon"
         :tile="tile"
+        :title="title"
         v-bind="attrs"
         v-on="on"
       >
@@ -20,7 +21,7 @@
     <v-list>
       <v-list-item link @click="onClickNewQuery">
         <v-list-item-title class="text-body-2">
-          New query
+          New custom query
         </v-list-item-title>
       </v-list-item>
       <v-divider />
@@ -68,6 +69,7 @@ export default {
     small: Boolean,
     icon: Boolean,
     tile: Boolean,
+    title: String,
   },
   data: () => ({
     searchQuery: null,

@@ -71,15 +71,15 @@ namespace Tim.Backend.Providers.Query
                 queryRun.Status = QueryRunStatus.Completed;
                 queryRun.ResultData = queryResult.QueryResults;
                 queryRun.ExecutionMetrics = queryResult.QueryStats;
-                await m_databaseRepo.AddOrUpdateItemAsync(queryRun);
             }
             catch (Exception ex)
             {
                 queryRun.Status = QueryRunStatus.Error;
                 queryRun.MainError = ex.Message;
                 queryRun.StackTrace = ex.StackTrace;
-                await m_databaseRepo.AddOrUpdateItemAsync(queryRun);
             }
+
+            await m_databaseRepo.AddOrUpdateItemAsync(queryRun);
 
             return queryRun;
         }

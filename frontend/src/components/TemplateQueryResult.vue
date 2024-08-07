@@ -1,13 +1,6 @@
 <template>
   <div>
     <div class="px-3 d-flex">
-      <NewQueryButton small text>
-        <v-icon left small>
-          mdi-plus
-        </v-icon>
-        New
-      </NewQueryButton>
-      <v-divider vertical style="height: 26px" />
       <v-btn
         text
         small
@@ -39,6 +32,9 @@
             v-bind="attrs"
             v-on="on"
           >
+          <v-icon left small>
+            mdi-swap-horizontal
+          </v-icon>
             Convert
           </v-btn>
         </template>
@@ -48,9 +44,10 @@
           </v-card-title>
           <v-card-text>
             This will convert the templated query into a custom query by making
-            all parameters constant. This will allow you to modify the KQL
-            directly. Note that this is permanent and cannot be
-            undone.
+            all parameters constant, allowing you to modify the KQL
+            directly. The source templated query will not be modified. 
+            This cannot be undone, so it may be desireable 
+            to "clone" the query before converting to retain the original query.
           </v-card-text>
           <v-card-actions>
             <v-spacer />
@@ -71,7 +68,6 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-      <v-divider vertical style="height: 26px" />
       <v-btn
         v-if="!editQuery"
         text
@@ -123,13 +119,16 @@
         small
         @click="onClickCancelEdit"
       >
+        <v-icon left small>
+          mdi-cancel
+        </v-icon>
         Cancel
       </v-btn>
     </div>
     <v-form
       v-if="editQuery && editParams"
       ref="form"
-      class="mx-2"
+      class="mx-3"
     >
       <v-text-field
         v-model="editTitle"
@@ -204,6 +203,7 @@
           </v-select>
           <v-select
             v-else-if="field.type === 'match' && typeof getFieldWithCache(fieldKey) === 'object'"
+            v-on:change="onSelectChange"
             v-model="editParams[fieldKey]"
             :items="getFieldWithCache(fieldKey)"
             item-value="value"
@@ -219,6 +219,7 @@
           </v-select>
           <v-combobox
             v-else-if="field.type === 'multiple'"
+            v-on:change="onSelectChange"
             v-model="editParams[fieldKey]"
             :items="getFieldWithCache(fieldKey)"
             :hint="field.hint"
@@ -244,6 +245,7 @@
           />
           <v-text-field
             v-else
+            v-on:change="onSelectChange"
             v-model.trim="editParams[fieldKey]"
             :hint="field.hint"
             persistent-hint
@@ -256,15 +258,11 @@
           </v-text-field>
         </v-col>
       </v-row>
-      <div class="d-flex">
-        <div class="text-subtitle-1">
-          Preview Query
-        </div>
-        <a class="text-body-2 ml-auto" @click="viewQuery = !viewQuery">
-          {{ viewQuery ? "hide" : "show" }}
+      <div>
+        <a class="text-subtitle-2" @click="viewQuery = !viewQuery">
+          {{ viewQuery ? "Hide Query" : "Preview Query" }}
         </a>
       </div>
-      <v-divider class="mb-3" />
       <v-textarea
         v-show="viewQuery"
         rows="20"
@@ -396,6 +394,12 @@ export default {
       'updateComponentTitle',
       'updateComponentParams',
     ]),
+    onSelectChange(item) {
+      if (item.length > 0)
+      {
+        this.editTitle = this.queryTemplate.buildSummary(this.editParams);
+      }
+    },
     onClickRefreshTitle() {
       this.editTitle = this.queryTemplate.buildSummary(this.editParams);
     },
